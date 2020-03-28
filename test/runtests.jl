@@ -1,6 +1,9 @@
+using Revise
 using CovidSEIR
 using Test
 
-@testset "CovidSEIR.jl" begin
-    # Write your own tests here.
+@testset "data" begin
+
+  df = covidcases()
+  
 end

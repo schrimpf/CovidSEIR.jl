@@ -24,8 +24,8 @@ WorldBankData = "2ff30676-a39f-58b2-ad74-5d1012d57b9b"
 ZipFile = "a5390f91-8eb1-5f08-bee0-b1d1ffed6cea"
 
 [compat]
+Turing = "^0.10.1"
 julia = "1"
-Turing = ">= 0.10.1"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

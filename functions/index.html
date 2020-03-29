@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <meta name="author" content="Paul Schrimpf">
+        
+        <link rel="shortcut icon" href="../img/favicon.ico">
+        <title>Functions - CovidSEIR.jl</title>
+        <link href="../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/atelier-forest-light.min.css">
+        <link href="../assets/Documenter.css" rel="stylesheet">
+        <link href="../assets/extra.css" rel="stylesheet">
+
+        <script src="../js/jquery-1.10.2.min.js" defer></script>
+        <script src="../js/bootstrap.min.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="..">CovidSEIR.jl</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="navitem">
+                                <a href=".." class="nav-link">Package Docs</a>
+                            </li>
+                            <li class="navitem">
+                                <a href="../covid/" class="nav-link">SEIR Model and Results</a>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">About <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../license/" class="dropdown-item">License</a>
+</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a href="https://github.com/schrimpf/CovidSEIR.jl/edit/master/docs/functions.md" class="nav-link"><i class="fa fa-github"></i> Edit on GitHub</a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-light navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-level="1"><a href="#function-reference" class="nav-link">Function Reference</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-level="2"><a href="#index" class="nav-link">Index</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<p><a id='Function-Reference-1'></a></p>
+<h1 id="function-reference">Function Reference<a class="headerlink" href="#function-reference" title="Permanent link">&para;</a></h1>
+<p><a id='CovidSEIR.countrymodel' href='#CovidSEIR.countrymodel'>#</a>
+<strong><code>CovidSEIR.countrymodel</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code class="julia"> countrymodel(data::CountryData, priors=defaultcountrypriors(),
+              ::Type{R}=Float64) where {R &lt;: Real} = begni
+</code></pre>
+
+<p>Returns Turing model for single country</p>
+<p><a target='_blank' href='https://github.com/schrimpf/CovidSEIR.jl/blob/54dff1a8f87d43c2c4f77ee77ff66cdca36b7e42/src/model.jl#LL100-L105' class='documenter-source'>source</a><br></p>
+<p><a id='CovidSEIR.covidjhudata-Tuple{}' href='#CovidSEIR.covidjhudata-Tuple{}'>#</a>
+<strong><code>CovidSEIR.covidjhudata</code></strong> &mdash; <em>Method</em>.</p>
+<pre><code class="julia">covidjhudata()
+</code></pre>
+
+<p>Downloads most recent JHU CSSE data on covid cases, deaths, and recoveries.</p>
+<p>Returns a DataFrame</p>
+<p><a target='_blank' href='https://github.com/schrimpf/CovidSEIR.jl/blob/54dff1a8f87d43c2c4f77ee77ff66cdca36b7e42/src/data.jl#LL1-L7' class='documenter-source'>source</a><br></p>
+<p><a id='CovidSEIR.plotvars-Tuple{DataFrames.AbstractDataFrame,CountryData}' href='#CovidSEIR.plotvars-Tuple{DataFrames.AbstractDataFrame,CountryData}'>#</a>
+<strong><code>CovidSEIR.plotvars</code></strong> &mdash; <em>Method</em>.</p>
+<pre><code class="julia">plotvars(simdf::DataFrames.AbstractDataFrame,
+         data::CountryData;
+         dayt0=Dates.Date(&quot;2020-01-21&quot;), # one day before JHU data begins
+         colors=ColorSchemes.colorschemes[:Set1_9])
+</code></pre>
+
+<p>Create plots showing fit and implications of simulated trajectories.</p>
+<p><a target='_blank' href='https://github.com/schrimpf/CovidSEIR.jl/blob/54dff1a8f87d43c2c4f77ee77ff66cdca36b7e42/src/model.jl#LL266-L273' class='documenter-source'>source</a><br></p>
+<p><a id='CovidSEIR.priorreport' href='#CovidSEIR.priorreport'>#</a>
+<strong><code>CovidSEIR.priorreport</code></strong> &mdash; <em>Function</em>.</p>
+<pre><code class="julia">priorreport((priors=defaultcountrypriors(), T=100, population=1e7)
+</code></pre>
+
+<p>Create tables and figures summarizing priors.</p>
+<p><a target='_blank' href='https://github.com/schrimpf/CovidSEIR.jl/blob/54dff1a8f87d43c2c4f77ee77ff66cdca36b7e42/src/model.jl#LL173-L177' class='documenter-source'>source</a><br></p>
+<p><a id='CovidSEIR.simtrajectories-Tuple{AbstractMCMC.AbstractChains,CountryData,Any}' href='#CovidSEIR.simtrajectories-Tuple{AbstractMCMC.AbstractChains,CountryData,Any}'>#</a>
+<strong><code>CovidSEIR.simtrajectories</code></strong> &mdash; <em>Method</em>.</p>
+<pre><code class="julia">simtrajectories(cc::AbstractMCMC.AbstractChains,
+                     data::CountryData, ts;
+                     ic=Iterators.product(StatsBase.sample(1:size(cc,1),300, replace=false),
+                                          1:size(cc,3)))
+</code></pre>
+
+<p>Simulate trajectories based on parameter values in chain <code>cc</code>.</p>
+<p><a target='_blank' href='https://github.com/schrimpf/CovidSEIR.jl/blob/54dff1a8f87d43c2c4f77ee77ff66cdca36b7e42/src/model.jl#LL215-L223' class='documenter-source'>source</a><br></p>
+<p><a id='CovidSEIR.odeSEIR-Tuple{}' href='#CovidSEIR.odeSEIR-Tuple{}'>#</a>
+<strong><code>CovidSEIR.odeSEIR</code></strong> &mdash; <em>Method</em>.</p>
+<p>odeSEIR()</p>
+<p>Sets up ODE for SEIR model with unconfirmed cases.</p>
+<p>Returns an ODEProblem</p>
+<p><a target='_blank' href='https://github.com/schrimpf/CovidSEIR.jl/blob/54dff1a8f87d43c2c4f77ee77ff66cdca36b7e42/src/model.jl#LL21-L27' class='documenter-source'>source</a><br></p>
+<p><a id='CovidSEIR.paramvars-Tuple{Any}' href='#CovidSEIR.paramvars-Tuple{Any}'>#</a>
+<strong><code>CovidSEIR.paramvars</code></strong> &mdash; <em>Method</em>.</p>
+<pre><code class="julia">Transfrom ODE parameters to/from vector
+</code></pre>
+
+<p><a target='_blank' href='https://github.com/schrimpf/CovidSEIR.jl/blob/54dff1a8f87d43c2c4f77ee77ff66cdca36b7e42/src/model.jl#LL16-L18' class='documenter-source'>source</a><br></p>
+<p><a id='CovidSEIR.paramvec-NTuple{5,Any}' href='#CovidSEIR.paramvec-NTuple{5,Any}'>#</a>
+<strong><code>CovidSEIR.paramvec</code></strong> &mdash; <em>Method</em>.</p>
+<pre><code class="julia">Transfrom ODE parameters to/from vector
+</code></pre>
+
+<p><a target='_blank' href='https://github.com/schrimpf/CovidSEIR.jl/blob/54dff1a8f87d43c2c4f77ee77ff66cdca36b7e42/src/model.jl#LL11-L13' class='documenter-source'>source</a><br></p>
+<p><a id='CovidSEIR.systemvars-Tuple{Any}' href='#CovidSEIR.systemvars-Tuple{Any}'>#</a>
+<strong><code>CovidSEIR.systemvars</code></strong> &mdash; <em>Method</em>.</p>
+<pre><code class="julia">Transfrom ODE variables to/from vector
+</code></pre>
+
+<p><a target='_blank' href='https://github.com/schrimpf/CovidSEIR.jl/blob/54dff1a8f87d43c2c4f77ee77ff66cdca36b7e42/src/model.jl#LL6-L8' class='documenter-source'>source</a><br></p>
+<p><a id='CovidSEIR.systemvec-NTuple{7,Any}' href='#CovidSEIR.systemvec-NTuple{7,Any}'>#</a>
+<strong><code>CovidSEIR.systemvec</code></strong> &mdash; <em>Method</em>.</p>
+<pre><code class="julia">Transfrom ODE variables to/from vector
+</code></pre>
+
+<p><a target='_blank' href='https://github.com/schrimpf/CovidSEIR.jl/blob/54dff1a8f87d43c2c4f77ee77ff66cdca36b7e42/src/model.jl#LL1-L3' class='documenter-source'>source</a><br></p>
+<p><a id='Index-1'></a></p>
+<h2 id="index">Index<a class="headerlink" href="#index" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="./#CovidSEIR.countrymodel"><code>CovidSEIR.countrymodel</code></a></li>
+<li><a href="./#CovidSEIR.covidjhudata-Tuple{}"><code>CovidSEIR.covidjhudata</code></a></li>
+<li><a href="./#CovidSEIR.odeSEIR-Tuple{}"><code>CovidSEIR.odeSEIR</code></a></li>
+<li><a href="./#CovidSEIR.paramvars-Tuple{Any}"><code>CovidSEIR.paramvars</code></a></li>
+<li><a href="./#CovidSEIR.paramvec-NTuple{5,Any}"><code>CovidSEIR.paramvec</code></a></li>
+<li><a href="./#CovidSEIR.plotvars-Tuple{DataFrames.AbstractDataFrame,CountryData}"><code>CovidSEIR.plotvars</code></a></li>
+<li><a href="./#CovidSEIR.priorreport"><code>CovidSEIR.priorreport</code></a></li>
+<li><a href="./#CovidSEIR.simtrajectories-Tuple{AbstractMCMC.AbstractChains,CountryData,Any}"><code>CovidSEIR.simtrajectories</code></a></li>
+<li><a href="./#CovidSEIR.systemvars-Tuple{Any}"><code>CovidSEIR.systemvars</code></a></li>
+<li><a href="./#CovidSEIR.systemvec-NTuple{7,Any}"><code>CovidSEIR.systemvec</code></a></li>
+</ul></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+                <p>Paul Schrimpf</p>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = "..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../js/base.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML" defer></script>
+        <script src="../assets/mathjaxhelper.js" defer></script>
+        <script src="../search/main.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    From here you can search these documents. Enter
+                    your search terms below.
+                </p>
+                <form>
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <meta name="author" content="Paul Schrimpf">
+        
+        <link rel="shortcut icon" href="../img/favicon.ico">
+        <title>SEIR Model and Results - CovidSEIR.jl</title>
+        <link href="../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/atelier-forest-light.min.css">
+        <link href="../assets/Documenter.css" rel="stylesheet">
+        <link href="../assets/extra.css" rel="stylesheet">
+
+        <script src="../js/jquery-1.10.2.min.js" defer></script>
+        <script src="../js/bootstrap.min.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="..">CovidSEIR.jl</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="navitem">
+                                <a href=".." class="nav-link">Package Docs</a>
+                            </li>
+                            <li class="navitem active">
+                                <a href="./" class="nav-link">SEIR Model and Results</a>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">About <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../license/" class="dropdown-item">License</a>
+</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href=".." class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../license/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="https://github.com/schrimpf/CovidSEIR.jl/edit/master/docs/covid.md" class="nav-link"><i class="fa fa-github"></i> Edit on GitHub</a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-light navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-level="1"><a href="#introduction" class="nav-link">Introduction</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-level="1"><a href="#data" class="nav-link">Data</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-level="1"><a href="#model" class="nav-link">Model</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-level="2"><a href="#empirical-model" class="nav-link">Empirical Model</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#model-limitations" class="nav-link">Model Limitations</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-level="1"><a href="#single-country-estimates" class="nav-link">Single Country Estimates</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-level="2"><a href="#priors" class="nav-link">Priors</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#estimation" class="nav-link">Estimation</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#canada" class="nav-link">Canada</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#italy" class="nav-link">Italy</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-level="1"><a href="#extensions" class="nav-link">Extensions</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-level="1"><a href="#about-this-document" class="nav-link">About this document</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<p><a href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a></p>
+<p>This work is licensed under a <a href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike
+4.0 International
+License</a></p>
+<pre><code class="julia">using Pkg
+#Pkg.activate(&quot;.&quot;) # If running on  vse.syzygy.ca, you might need to uncomment this command
+#try
+  using CovidSEIR
+#catch
+  #Pkg.add(PackageSpec(url=&quot;https://github.com/schrimpf/CovidSEIR.jl&quot;))
+  #using CovidSEIR
+#end
+using Plots
+Plots.pyplot()
+using DataFrames, JLD2
+jmddir = normpath(joinpath(dirname(Base.find_package(&quot;CovidSEIR&quot;)),&quot;..&quot;,&quot;docs&quot;,&quot;jmd&quot;))
+</code></pre>
+
+<pre><code>"/home/paul/.julia/dev/CovidSEIR/docs/jmd"
+</code></pre>
+<h1 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h1>
+<h1 id="data">Data<a class="headerlink" href="#data" title="Permanent link">&para;</a></h1>
+<p>We will use data from <a href="https://github.com/CSSEGISandData/COVID-19">Johns Hopkins University Center for Systems
+Science and Engineering</a>. It
+is gathered from a variety of sources and updated daily. JHU CSSE uses
+the data for <a href="https://coronavirus.jhu.edu/map.html">this interactive
+website.</a>. For another course, I
+wrote some notes using this data in python
+<a href="https://github.com/ubcecon/ECON323_2020/tree/master/extra_notebooks">here.</a></p>
+<p>This data has daily cumulative counts of confirmed cases, recoveries,
+and deaths in each country (and provinces within some countries).</p>
+<pre><code class="julia">covdf = covidjhudata()
+describe(covdf)
+</code></pre>
+
+<pre><code>11×8 DataFrame. Omitted printing of 2 columns
+│ Row │ variable  │ mean      │ min         │ median    │ max        │ nuni
+que │
+│     │ Symbol    │ Union…    │ Any         │ Union…    │ Any        │ Unio
+n…  │
+├─────┼───────────┼───────────┼─────────────┼───────────┼────────────┼─────
+────┤
+│ 1   │ Date      │           │ 2020-01-22  │           │ 2020-03-28 │ 67  
+    │
+│ 2   │ confirmed │ 486.367   │ 0           │ 0.0       │ 121478     │     
+    │
+│ 3   │ Province  │           │ Alberta     │           │ Zhejiang   │ 79  
+    │
+│ 4   │ Country   │           │ Afghanistan │           │ Zimbabwe   │ 177 
+    │
+│ 5   │ Lat       │ 22.0528   │ -41.4545    │ 23.8298   │ 71.7069    │     
+    │
+│ 6   │ Long      │ 23.2675   │ -135.0      │ 20.9394   │ 178.065    │     
+    │
+│ 7   │ deaths    │ 18.9005   │ 0           │ 0.0       │ 10023      │     
+    │
+│ 8   │ recovered │ 162.121   │ 0           │ 0.0       │ 62098      │     
+    │
+│ 9   │ iso2c     │           │ AD          │           │ ZW         │ 170 
+    │
+│ 10  │ cpop      │ 2.27709e8 │ 33785.0     │ 2.49924e7 │ 1.39273e9  │     
+    │
+│ 11  │ ppop      │ 2.74801e7 │ 41078       │ 1.557e7   │ 111690000  │     
+    │
+</code></pre>
+<h1 id="model">Model<a class="headerlink" href="#model" title="Permanent link">&para;</a></h1>
+<p>We will estimate a susceptible, exposed, infectious, recovered (SEIR)
+epidemiological model of Covid transmission. In particular, we will use
+a version based on <a href="https://alhill.shinyapps.io/COVID19seir/">this webapp by Allison
+Hill</a>.</p>
+<p>The model contains the following variables, all of which are functions
+of time</p>
+<ul>
+<li>$S$: Susceptible individuals</li>
+<li>$E$: Exposed individuals - infected but not yet infectious or
+    symptomatic</li>
+<li>$I_i$: Undetected infected individuals in severity class $i$.
+    Severity increaes with $i$ and we assume individuals must pass
+    through all previous classes<ul>
+<li>$I_1$: Mild infection</li>
+<li>$I_2$: Severe infection</li>
+</ul>
+</li>
+<li>$C_i$ confirmed infected individuals in severity class $i$</li>
+<li>$R = R_u + R_c$: individuals who have recovered from disease and are
+    now immune<ul>
+<li>$R_u$ recovered individuals whose infection were never detected</li>
+<li>$R_c$ recovered individuals who were confirmed cases</li>
+</ul>
+</li>
+<li>$X$: Dead individuals</li>
+</ul>
+<p>Compared to Hill’s model, we have reduced the number of severity classes
+and from 3 to 2, and we have added undetected infections and recoveries.
+In the data, we observe active confirmed cases $\approx \sum_i C_i$,
+deaths $\approx X$, and confirmed recoveries $\approx R_c$.</p>
+<p>These variables evolve according to the following system of differential
+equations.</p>
+<p>
+<script type="math/tex; mode=display">
+\begin{align*}
+\dot{S} & = -S \left( \sum_i \beta_i (I_i + C_i) right) \\
+\dot{E} & = S \left( \sum_i \beta_i (I_i + C_i) right) - a E  \\
+\dot{I_1} & = a E - \gamma_1 I_1 - p_1 I_1 - \tau C_1 \\
+\dot{I_2} & = 0 \\
+\dot{C_1}  & =  \tau I - \gamma_1 C_1 - p_1 C_1 \\
+\dot{C_2} & = p_1(I_1 + C_1) - \gamma_2 C_2 - p_2 C_2 \\
+\dot{R_u}  & = \sum_i \gamma_i I_i \\
+\dot{R_c} & = \sum_i \gamma_i C_i \\
+\dot{X}  & = p_2 C_2
+\end{align*}
+</script>
+</p>
+<p>Where the parameters are :</p>
+<ul>
+<li>$\beta_i$ rate at which infected individuals in class $i$ contact
+    susceptibles and infect them</li>
+<li>$a$ rate of progression from the exposed to infected class</li>
+<li>$\gamma_i$ rate at which infected individuals in class $i$ recover
+    from disease and become immune</li>
+<li>$p_1$ rate at which infected individuals in class $i$ progress to
+    class $i+1$</li>
+<li>$p_2$ death rate for individuals in the most severe stage of disease</li>
+<li>$\tau$ rate at which infections of class $1$ are detected</li>
+</ul>
+<p>Note that we are assuming that all severe infections are detected (and
+hence $I_2 = 0$). We are also assuming that confirmed and unconfirmed
+cases have the same recovery and progression rates.</p>
+<h2 id="empirical-model">Empirical Model<a class="headerlink" href="#empirical-model" title="Permanent link">&para;</a></h2>
+<p>Our data has country population, $N$, daily cumulative confirmed cases,
+$c_t$, deaths, $d_t$, and recoveries, $r_t$. We will assume that at a
+known time 0, there is an unknown portion of exposed individuals, $p_0$,
+so</p>
+<p>
+<script type="math/tex; mode=display">
+\begin{align*}
+S(0) = & (1-p_0) N \\
+E(0) = & p_0 N 
+\end{align*}
+</script>
+</p>
+<p>and all other model variables are 0 at time 0. We assume that the
+observed data is distributed as</p>
+<p>
+<script type="math/tex; mode=display">
+\begin{align*} 
+d_t \sim & N(X(t), \sigma_X^2) \\
+r_t \sim & N(R_c(t), \sigma_R^2) \\
+c_t - d_t - r_t \sim & N(C_1(t) + C_2(t), \sigma_C^2)
+\end{align*}
+</script>
+</p>
+<h2 id="model-limitations">Model Limitations<a class="headerlink" href="#model-limitations" title="Permanent link">&para;</a></h2>
+<p>An important limitation is that the model assumes all parameters are
+constant over time. This is almost surely incorrect. Most countries have
+implemented quarantine and distancing policies to attempt to reduce
+$\beta$. Efforts have also been made to increase $\tau$. Innovations in
+treatment and crowding of the medical system likely lead to variation in
+$\gamma$ and $p$.</p>
+<h1 id="single-country-estimates">Single Country Estimates<a class="headerlink" href="#single-country-estimates" title="Permanent link">&para;</a></h1>
+<h2 id="priors">Priors<a class="headerlink" href="#priors" title="Permanent link">&para;</a></h2>
+<p>We use the follow prior distributions. The means of these are loosely
+based on <a href="https://alhill.shinyapps.io/COVID19seir/">Hill’s defaults</a>.</p>
+<pre><code class="julia">using Distributions
+defaultcountrypriors() = Dict(
+  &quot;a&quot; =&gt; truncated(Normal(1/5, 3), 1/14, 1.0), 
+  &quot;p[1]&quot; =&gt; truncated(Normal(0.05, 0.3), 0, 1),
+  &quot;p[2]&quot; =&gt; truncated(Normal(0.05, 0.3), 0, 1),
+  &quot;γ[1]&quot; =&gt; truncated(Normal(0.133, 0.5), 0, 3),
+  &quot;γ[2]&quot; =&gt; truncated(Normal(0.05, 0.3), 0, 1),
+  &quot;β[1]&quot; =&gt; truncated(Normal(0.5, 1), 0, 10),
+  &quot;β[2]&quot; =&gt; truncated(Normal(0.5, 1), 0, 10),
+  &quot;τ&quot; =&gt; truncated(Normal(0.2, 2), 0, 10),
+  &quot;pE0&quot; =&gt; truncated(Normal(0.001, 0.1), 0, 1),
+  &quot;sigD&quot; =&gt; InverseGamma(2,3),
+  &quot;sigC&quot; =&gt; InverseGamma(2,3),
+  &quot;sigRc&quot; =&gt; InverseGamma(2,3))
+</code></pre>
+
+<p>Summary statistics of draws from this prior distribution are below.</p>
+<pre><code class="julia">pr = priorreport()
+pr.tbl
+</code></pre>
+
+<pre><code>Error: type NamedTuple has no field tbl
+</code></pre>
+<p>The following plots show the implications of this prior for the observed
+data. The faint lines on each figure shows 1000 trajectories sampled
+from the prior distribution. The black line is the prior mean. The
+shaded region is a pointwise 90% prior credible interval.</p>
+<pre><code class="julia">plot(pr.figs[1], xlabel=&quot;Days&quot;, ylabel=&quot;Portion of population&quot;)
+</code></pre>
+
+<p><img alt="" src="../figures/covid_5_1.png" /></p>
+<pre><code class="julia">plot(pr.figs[2], xlabel=&quot;Days&quot;, ylabel=&quot;Portion of population&quot;)
+</code></pre>
+
+<p><img alt="" src="../figures/covid_6_1.png" /></p>
+<pre><code class="julia">plot(pr.figs[3], xlabel=&quot;Days&quot;, ylabel=&quot;Portion of population&quot;)
+</code></pre>
+
+<p><img alt="" src="../figures/covid_7_1.png" /></p>
+<p>Subjectively this prior seems reasonable. It is perhaps too concentrated
+on relatively fast epidemics. I may alter it, but it’s what I used for
+the current results.</p>
+<h2 id="estimation">Estimation<a class="headerlink" href="#estimation" title="Permanent link">&para;</a></h2>
+<p>We estimate the model by MCMC. Specifically, we use the
+<a href="https://github.com/TuringLang/Turing.jl">Turing.jl</a> package (Ge, Xu,
+and Ghahramani <a href="#ref-ge2018t">2018</a>) . For sampling, we use the
+No-U-Turn-Sampler variant of Hamiltonian Monte Carlo. In the results
+below we use 4 chains with 1000 warmup iterations, and 1000 iterations
+for the results.</p>
+<h2 id="canada">Canada<a class="headerlink" href="#canada" title="Permanent link">&para;</a></h2>
+<p>We estimate the model with the following code. It takes about an hour.</p>
+<pre><code class="julia">canada = CountryData(covdf, &quot;Canada&quot;);
+</code></pre>
+
+<pre><code class="julia">using Turing
+canmod = countrymodel(canada)
+cc = Turing.psample(canmod, NUTS(0.65), 2000, 4)
+import JLD2
+JLD2.@save &quot;$jmddir/canada_$(Dates.today()).jld2&quot; cc
+</code></pre>
+
+<pre><code class="julia">JLD2.@load &quot;$jmddir/canada_2020-03-28.jld2&quot; cc;
+</code></pre>
+
+<h3 id="estimates">Estimates<a class="headerlink" href="#estimates" title="Permanent link">&para;</a></h3>
+<pre><code class="julia">plot(cc)
+</code></pre>
+
+<p><img alt="" src="../figures/covid_11_1.png" /></p>
+<p>We can see that there might be convergence issues. There are large
+differences between the four chains for some parameters.</p>
+<pre><code class="julia">describe(cc)
+</code></pre>
+
+<pre><code>2-element Array{ChainDataFrame,1}
+
+Summary Statistics
+  parameters     mean     std  naive_se    mcse       ess   r_hat
+  ──────────  ───────  ──────  ────────  ──────  ────────  ──────
+           a   0.3088  0.2412    0.0038  0.0231   89.6474  1.0359
+         pE0   0.0000  0.0000    0.0000  0.0000   70.5632  1.0856
+        p[1]   0.1042  0.1802    0.0028  0.0271   16.0643  2.4066
+        p[2]   0.1835  0.1769    0.0028  0.0205   21.5262  1.2919
+        sigC  55.9872  5.3305    0.0843  0.4254  151.1913  1.0043
+        sigD   1.2701  0.1226    0.0019  0.0091  156.7255  1.0465
+       sigRc  17.4322  1.4134    0.0223  0.0887  303.4507  1.0111
+        β[1]   0.5243  0.3414    0.0054  0.0402   26.0625  1.1952
+        β[2]   0.9836  0.6433    0.0102  0.0441  170.9821  1.0298
+        γ[1]   0.0504  0.1739    0.0027  0.0222   19.6993  1.3554
+        γ[2]   0.2633  0.2855    0.0045  0.0318   26.4008  1.2485
+           τ   1.4733  1.2375    0.0196  0.1117   60.5718  1.0828
+
+Quantiles
+  parameters     2.5%    25.0%    50.0%    75.0%    97.5%
+  ──────────  ───────  ───────  ───────  ───────  ───────
+           a   0.0750   0.1199   0.2164   0.4248   0.9082
+         pE0   0.0000   0.0000   0.0000   0.0000   0.0000
+        p[1]   0.0021   0.0057   0.0098   0.1192   0.6038
+        p[2]   0.0024   0.0044   0.1515   0.2911   0.5979
+        sigC  46.3921  52.1740  55.7451  59.4129  66.9490
+        sigD   1.0686   1.1820   1.2583   1.3417   1.5536
+       sigRc  14.9106  16.3755  17.3844  18.3851  20.2662
+        β[1]   0.0931   0.3109   0.4274   0.6564   1.4965
+        β[2]   0.0789   0.5019   0.8582   1.3500   2.4933
+        γ[1]   0.0007   0.0042   0.0072   0.0098   0.6798
+        γ[2]   0.0022   0.0124   0.1721   0.4366   0.9681
+           τ   0.0092   0.3943   1.2458   2.2669   4.2214
+</code></pre>
+<p>The parameter estimates are generally not very precise.</p>
+<h3 id="fit">Fit<a class="headerlink" href="#fit" title="Permanent link">&para;</a></h3>
+<pre><code class="julia">sdf = simtrajectories(cc, canada, 1:150)
+f = plotvars(sdf, canada)
+f.fit
+</code></pre>
+
+<p><img alt="" src="../figures/covid_13_1.png" /></p>
+<p>In this figure, solid lines are observed data, dashed lines are
+posterior means, and the shaded region is a pointwise 90% credible
+interval.</p>
+<p>Note that the last day of data used in the estimation was March 27th.
+The fit appears quite good. The fitted estimates are also remarkably
+precise. Although individual parameters are not precisely estimated, the
+combination of them that gives rise to the observed data is precisely
+estimated.</p>
+<h3 id="implications">Implications<a class="headerlink" href="#implications" title="Permanent link">&para;</a></h3>
+<p>We now look at the model’s projections for some observed and unobserved
+variables.</p>
+<pre><code class="julia">for fig in f.trajectories
+  display(fig)
+end
+</code></pre>
+
+<p><img alt="" src="../figures/covid_14_1.png" /> <img alt="" src="../figures/covid_14_2.png" />
+<img alt="" src="../figures/covid_14_3.png" /> <img alt="" src="../figures/covid_14_4.png" />
+<img alt="" src="../figures/covid_14_5.png" /> <img alt="" src="../figures/covid_14_6.png" />
+<img alt="" src="../figures/covid_14_7.png" /> <img alt="" src="../figures/covid_14_8.png" />
+<img alt="" src="../figures/covid_14_9.png" /> <img alt="" src="../figures/covid_14_10.png" />
+<img alt="" src="../figures/covid_14_11.png" /> <img alt="" src="../figures/covid_14_12.png" />
+<img alt="" src="../figures/covid_14_13.png" /> <img alt="" src="../figures/covid_14_14.png" /></p>
+<p>In general we see a similar pattern as noted above: the posteriors for
+observed variables are fairly precise. However, the posteriors for
+unobserved variables, such as the portion of undetected infections and
+the portion of mild infections, are very imprecise.</p>
+<h2 id="italy">Italy<a class="headerlink" href="#italy" title="Permanent link">&para;</a></h2>
+<pre><code class="julia">italy = CountryData(covdf, &quot;Italy&quot;);
+</code></pre>
+
+<pre><code class="julia">itmod = countrymodel(italy)
+ci = Turing.psample(itmod, NUTS(0.65), 2000, 4)
+import JLD2
+JLD2.@save &quot;$jmddir/italy_$(Dates.today()).jld2&quot; ci
+</code></pre>
+
+<pre><code class="julia">JLD2.@load &quot;$jmddir/italy_2020-03-28.jld2&quot; ci;
+</code></pre>
+
+<h3 id="estimates_1">Estimates<a class="headerlink" href="#estimates_1" title="Permanent link">&para;</a></h3>
+<pre><code class="julia">plot(ci)
+</code></pre>
+
+<p><img alt="" src="../figures/covid_18_1.png" /></p>
+<pre><code class="julia">describe(ci)
+</code></pre>
+
+<pre><code>2-element Array{ChainDataFrame,1}
+
+Summary Statistics
+  parameters      mean      std  naive_se    mcse       ess   r_hat
+  ──────────  ────────  ───────  ────────  ──────  ────────  ──────
+           a    0.1821   0.1772    0.0028  0.0227   16.0643  1.7055
+         pE0    0.0000   0.0000    0.0000  0.0000   16.0643  1.9103
+        p[1]    0.0006   0.0005    0.0000  0.0001   17.7140  1.4648
+        p[2]    0.0279   0.0209    0.0003  0.0033   16.0643  7.7417
+        sigC  439.9273  57.7940    0.9138  6.8324   16.6947  1.4674
+        sigD   86.8377  24.9425    0.3944  3.8063   16.0643  3.4150
+       sigRc  143.3689  11.7722    0.1861  0.6651  326.4399  1.0226
+        β[1]    1.3916   0.7617    0.0120  0.1072   16.2578  1.5885
+        β[2]    1.0478   0.7186    0.0114  0.0346  364.2459  1.0204
+        γ[1]    0.2462   0.2050    0.0032  0.0291   16.5431  1.5453
+        γ[2]    0.0251   0.0288    0.0005  0.0046   16.0643  7.8777
+           τ    0.0001   0.0000    0.0000  0.0000   91.1094  1.0839
+
+Quantiles
+  parameters      2.5%     25.0%     50.0%     75.0%     97.5%
+  ──────────  ────────  ────────  ────────  ────────  ────────
+           a    0.0723    0.0826    0.1013    0.1903    0.7374
+         pE0    0.0000    0.0000    0.0000    0.0000    0.0000
+        p[1]    0.0000    0.0001    0.0006    0.0010    0.0019
+        p[2]    0.0152    0.0155    0.0160    0.0278    0.0704
+        sigC  355.6332  397.2074  428.3271  473.3011  579.4653
+        sigD   39.8203   75.1277   96.2984  103.7001  117.2422
+       sigRc  122.0351  135.1442  142.6531  151.3082  167.1851
+        β[1]    0.3304    0.6782    1.3742    1.8807    2.9848
+        β[2]    0.0484    0.4801    0.9462    1.4963    2.7269
+        γ[1]    0.0002    0.0482    0.2242    0.3697    0.7272
+        γ[2]    0.0028    0.0075    0.0104    0.0267    0.0823
+           τ    0.0000    0.0001    0.0001    0.0001    0.0001
+</code></pre>
+<p>Compared to Canada, Italy has a very low estimate of $\tau$. Apparently
+a high number of undetected cases helps to explain the rapid growth in
+confirmed cases in Italy.</p>
+<h3 id="fit_1">Fit<a class="headerlink" href="#fit_1" title="Permanent link">&para;</a></h3>
+<pre><code class="julia">sdf = simtrajectories(ci, italy, 1:150)
+f = plotvars(sdf, italy)
+f.fit
+</code></pre>
+
+<p><img alt="" src="../figures/covid_20_1.png" /></p>
+<p>As with Canada, the fit is very good, and the posterior distribution of
+observables is very precise.</p>
+<h3 id="implications_1">Implications<a class="headerlink" href="#implications_1" title="Permanent link">&para;</a></h3>
+<pre><code class="julia">for fig in f.trajectories
+  display(fig)
+end
+</code></pre>
+
+<p><img alt="" src="../figures/covid_21_1.png" /> <img alt="" src="../figures/covid_21_2.png" />
+<img alt="" src="../figures/covid_21_3.png" /> <img alt="" src="../figures/covid_21_4.png" />
+<img alt="" src="../figures/covid_21_5.png" /> <img alt="" src="../figures/covid_21_6.png" />
+<img alt="" src="../figures/covid_21_7.png" /> <img alt="" src="../figures/covid_21_8.png" />
+<img alt="" src="../figures/covid_21_9.png" /> <img alt="" src="../figures/covid_21_10.png" />
+<img alt="" src="../figures/covid_21_11.png" /> <img alt="" src="../figures/covid_21_12.png" />
+<img alt="" src="../figures/covid_21_13.png" /> <img alt="" src="../figures/covid_21_14.png" /></p>
+<p>The posterior estimates imply that Italy has about 10 times as many
+undetected cases as detected.</p>
+<h1 id="extensions">Extensions<a class="headerlink" href="#extensions" title="Permanent link">&para;</a></h1>
+<ol>
+<li>Estimate single country model for more countries/areas.</li>
+<li>Estimate a multi-country model with some parameters common across
+    countries and others multi-level distributions.</li>
+<li>Allow time varying parameters.</li>
+</ol>
+<h1 id="about-this-document">About this document<a class="headerlink" href="#about-this-document" title="Permanent link">&para;</a></h1>
+<p>This document was created using Weave.jl. The code is available in <a href="https://github.com/schrimpf/CovidSEIR.jl">on
+github</a>.</p>
+<div class="references hanging-indent" id="refs">
+<div id="ref-ge2018t">
+<p>Ge, Hong, Kai Xu, and Zoubin Ghahramani. 2018. “Turing: A Language for
+Flexible Probabilistic Inference.” In <em>International Conference on
+Artificial Intelligence and Statistics, AISTATS 2018, 9-11 April 2018,
+Playa Blanca, Lanzarote, Canary Islands, Spain</em>, 1682–90.
+<a href="http://proceedings.mlr.press/v84/ge18b.html">http://proceedings.mlr.press/v84/ge18b.html</a>.</p>
+</div>
+</div></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+                <p>Paul Schrimpf</p>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = "..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../js/base.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML" defer></script>
+        <script src="../assets/mathjaxhelper.js" defer></script>
+        <script src="../search/main.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    From here you can search these documents. Enter
+                    your search terms below.
+                </p>
+                <form>
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

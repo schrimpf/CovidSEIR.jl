@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Covid SEIR Estimates · CovidSEIR.jl</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit">CovidSEIR.jl</span></div><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li class="is-active"><a class="tocitem" href>Covid SEIR Estimates</a><ul class="internal"><li class="toplevel"><a class="tocitem" href="#Data-1"><span>Data</span></a></li><li class="toplevel"><a class="tocitem" href="#Model-1"><span>Model</span></a></li><li><a class="tocitem" href="#Empirical-Model-1"><span>Empirical Model</span></a></li><li class="toplevel"><a class="tocitem" href="#Single-Country-Estimates-1"><span>Single Country Estimates</span></a></li><li><a class="tocitem" href="#Priors-1"><span>Priors</span></a></li><li><a class="tocitem" href="#Estimation-1"><span>Estimation</span></a></li><li><a class="tocitem" href="#Canada-1"><span>Canada</span></a></li><li><a class="tocitem" href="#Italy-1"><span>Italy</span></a></li><li class="toplevel"><a class="tocitem" href="#About-this-document-1"><span>About this document</span></a></li></ul></li><li><a class="tocitem" href="../functions/">Function Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Covid SEIR Estimates</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Covid SEIR Estimates</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/schrimpf/CovidSEIR.jl/blob/master/docs/src/covid.md#L" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><p><a href="http://creativecommons.org/licenses/by-sa/4.0/"><img src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" alt/></a></p><p>This work is licensed under a <a href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International License</a></p><pre><code class="language-julia">using Pkg
+#Pkg.activate(&quot;.&quot;) # If running on  vse.syzygy.ca, you might need to uncomment this command
+#try
+  using CovidSEIR
+#catch
+  #Pkg.add(PackageSpec(url=&quot;https://github.com/schrimpf/CovidSEIR.jl&quot;))
+  #using CovidSEIR
+#end
+using Plots
+ENV[&quot;GKS_ENCODING&quot;] = &quot;utf-8&quot;
+using DataFrames, JLD2</code></pre><h1 id="Introduction-1"><a class="docs-heading-anchor" href="#Introduction-1">Introduction</a><a class="docs-heading-anchor-permalink" href="#Introduction-1" title="Permalink"></a></h1><h1 id="Data-1"><a class="docs-heading-anchor" href="#Data-1">Data</a><a class="docs-heading-anchor-permalink" href="#Data-1" title="Permalink"></a></h1><p>We will use data from <a href="https://github.com/CSSEGISandData/COVID-19">Johns Hopkins University Center for Systems Science and Engineering</a>. It is gathered from a variety of sources and updated daily. JHU CSSE uses the data for <a href="https://coronavirus.jhu.edu/map.html">this interactive website.</a>. For another course, I wrote some notes using this data in python <a href="https://github.com/ubcecon/ECON323_2020/tree/master/extra_notebooks">here.</a></p><p>This data has daily cumulative counts of confirmed cases, recoveries, and deaths in each country (and provinces within some countries).</p><pre><code class="language-julia">covdf = covidjhudata()
+describe(covdf)</code></pre><pre><code class="language-none">11×8 DataFrame. Omitted printing of 2 columns
+│ Row │ variable  │ mean      │ min         │ median    │ max        │ nuni
+que │
+│     │ Symbol    │ Union…    │ Any         │ Union…    │ Any        │ Unio
+n…  │
+├─────┼───────────┼───────────┼─────────────┼───────────┼────────────┼─────
+────┤
+│ 1   │ Date      │           │ 2020-01-22  │           │ 2020-03-28 │ 67  
+    │
+│ 2   │ confirmed │ 486.367   │ 0           │ 0.0       │ 121478     │     
+    │
+│ 3   │ Province  │           │ Alberta     │           │ Zhejiang   │ 79  
+    │
+│ 4   │ Country   │           │ Afghanistan │           │ Zimbabwe   │ 177 
+    │
+│ 5   │ Lat       │ 22.0528   │ -41.4545    │ 23.8298   │ 71.7069    │     
+    │
+│ 6   │ Long      │ 23.2675   │ -135.0      │ 20.9394   │ 178.065    │     
+    │
+│ 7   │ deaths    │ 18.9005   │ 0           │ 0.0       │ 10023      │     
+    │
+│ 8   │ recovered │ 162.121   │ 0           │ 0.0       │ 62098      │     
+    │
+│ 9   │ iso2c     │           │ AD          │           │ ZW         │ 170 
+    │
+│ 10  │ cpop      │ 2.27709e8 │ 33785.0     │ 2.49924e7 │ 1.39273e9  │     
+    │
+│ 11  │ ppop      │ 2.74801e7 │ 41078       │ 1.557e7   │ 111690000  │     
+    │</code></pre><h1 id="Model-1"><a class="docs-heading-anchor" href="#Model-1">Model</a><a class="docs-heading-anchor-permalink" href="#Model-1" title="Permalink"></a></h1><p>We will estimate a susceptible, exposed, infectious, recovered (SEIR) epidemiological model of Covid transmission. In particular, we will use a version based on <a href="https://alhill.shinyapps.io/COVID19seir/">this webapp by Allison Hill</a>.</p><p>The model contains the following variables, all of which are functions of time</p><ul><li><span>$S$</span>: Susceptible individuals</li><li><span>$E$</span>: Exposed individuals - infected but not yet infectious or   symptomatic</li><li><span>$I_i$</span>: Undetected infected individuals in severity class <span>$i$</span>.   Severity increaes with <span>$i$</span> and we assume individuals must pass   through all previous classes<ul><li><span>$I_1$</span>: Mild infection</li><li><span>$I_2$</span>: Severe infection</li></ul></li><li><span>$C_i$</span> confirmed infected individuals in severity class <span>$i$</span></li><li><span>$R = R_u + R_c$</span>: individuals who have recovered from disease and are   now immune<ul><li><span>$R_u$</span> recovered individuals whose infection were never detected</li><li><span>$R_c$</span> recovered individuals who were confirmed cases</li></ul></li><li><span>$X$</span>: Dead individuals</li></ul><p>Compared to Hill’s model, we have reduced the number of severity classes and from 3 to 2, and we have added undetected infections and recoveries. In the data, we observe active confirmed cases <span>$\approx \sum_i C_i$</span>, deaths <span>$\approx X$</span>, and confirmed recoveries <span>$\approx R_c$</span>.</p><p>These variables evolve according to the following system of differential equations.</p>$<p>\begin{align<em>} \dot{S} &amp; = -S \left( \sum<em>i \beta</em>i (I<em>i + C</em>i) right) \
+\dot{E} &amp; = S \left( \sum<em>i \beta</em>i (I<em>i + C</em>i) right) - a E  \
+\dot{I<em>1} &amp; = a E - \gamma</em>1 I<em>1 - p</em>1 I<em>1 - \tau C</em>1 \
+\dot{I<em>2} &amp; = 0 \dot{C</em>1}  &amp; =  \tau I - \gamma<em>1 C</em>1 - p<em>1 C</em>1 \
+\dot{C<em>2} &amp; = p</em>1(I<em>1 + C</em>1) - \gamma<em>2 C</em>2 - p<em>2 C</em>2 \
+\dot{R<em>u}  &amp; = \sum</em>i \gamma<em>i I</em>i \
+\dot{R<em>c} &amp; = \sum</em>i \gamma<em>i C</em>i \
+\dot{X}  &amp; = p<em>2 C</em>2 \end{align</em>} $</p><p>Where the parameters are :</p><ul><li><span>$\beta_i$</span> rate at which infected individuals in class <span>$i$</span> contact   susceptibles and infect them</li><li><span>$a$</span> rate of progression from the exposed to infected class</li><li><span>$\gamma_i$</span> rate at which infected individuals in class <span>$i$</span> recover   from disease and become immune</li><li><span>$p_1$</span> rate at which infected individuals in class <span>$i$</span> progress to   class <span>$i+1$</span></li><li><span>$p_2$</span> death rate for individuals in the most severe stage of disease</li><li><span>$\tau$</span> rate at which infections of class <span>$1$</span> are detected</li></ul><p>Note that we are assuming that all severe infections are detected (and hence <span>$I_2 = 0$</span>). We are also assuming that confirmed and unconfirmed cases have the same recovery and progression rates.</p><h2 id="Empirical-Model-1"><a class="docs-heading-anchor" href="#Empirical-Model-1">Empirical Model</a><a class="docs-heading-anchor-permalink" href="#Empirical-Model-1" title="Permalink"></a></h2><p>Our data has country population, <span>$N$</span>, daily cumulative confirmed cases, <span>$c_t$</span>, deaths, <span>$d_t$</span>, and recoveries, <span>$r_t$</span>. We will assume that at a known time 0, there is an unknown portion of exposed individuals, <span>$p_0$</span>, so</p>$<p>\begin{align<em>} S(0) = &amp; (1-p<em>0) N \
+E(0) = &amp; p</em>0 N  \end{align</em>} $</p><p>and all other model variables are 0 at time 0. We assume that the observed data is distributed as</p>$<p>\begin{align<em>}  d<em>t \sim &amp; N(X(t), \sigma</em>X^2) \
+r<em>t \sim &amp; N(R</em>c(t), \sigma<em>R^2) \
+c</em>t - d<em>t - r</em>t \sim &amp; N(C<em>1(t) + C</em>2(t), \sigma_C^2) \end{align</em>} $</p><h1 id="Single-Country-Estimates-1"><a class="docs-heading-anchor" href="#Single-Country-Estimates-1">Single Country Estimates</a><a class="docs-heading-anchor-permalink" href="#Single-Country-Estimates-1" title="Permalink"></a></h1><h2 id="Priors-1"><a class="docs-heading-anchor" href="#Priors-1">Priors</a><a class="docs-heading-anchor-permalink" href="#Priors-1" title="Permalink"></a></h2><p>We use the follow prior distributions. The means of these are loosely based on <a href="https://alhill.shinyapps.io/COVID19seir/">Hill’s defaults</a>.</p><pre><code class="language-julia">defaultcountrypriors() = Dict(
+  &quot;a&quot; =&gt; truncated(Normal(1/5, 3), 1/14, 1.0), 
+  &quot;p[1]&quot; =&gt; truncated(Normal(0.05, 0.3), 0, 1),
+  &quot;p[2]&quot; =&gt; truncated(Normal(0.05, 0.3), 0, 1),
+  &quot;γ[1]&quot; =&gt; truncated(Normal(0.133, 0.5), 0, 3),
+  &quot;γ[2]&quot; =&gt; truncated(Normal(0.05, 0.3), 0, 1),
+  &quot;β[1]&quot; =&gt; truncated(Normal(0.5, 1), 0, 10),
+  &quot;β[2]&quot; =&gt; truncated(Normal(0.5, 1), 0, 10),
+  &quot;τ&quot; =&gt; truncated(Normal(0.2, 2), 0, 10),
+  &quot;pE0&quot; =&gt; truncated(Normal(0.001, 0.1), 0, 1),
+  &quot;sigD&quot; =&gt; InverseGamma(2,3),
+  &quot;sigC&quot; =&gt; InverseGamma(2,3),
+  &quot;sigRc&quot; =&gt; InverseGamma(2,3))</code></pre><p>The following plots show the implications of this prior for the observed data. The faint lines on each figure shows 1000 trajectories sampled from the prior distribution. The black line is the prior mean. The shaded region is a pointwise 90% prior credible interval.</p><pre><code class="language-julia">pr = priorreport()
+plot(pr.figs[1], xlabel=&quot;Days&quot;, ylabel=&quot;Portion of population&quot;)</code></pre><p><img src="figures/covid_4_1.png" alt/></p><pre><code class="language-julia">plot(pr.figs[2], xlabel=&quot;Days&quot;, ylabel=&quot;Portion of population&quot;)</code></pre><p><img src="figures/covid_5_1.png" alt/></p><pre><code class="language-julia">plot(pr.figs[3], xlabel=&quot;Days&quot;, ylabel=&quot;Portion of population&quot;)</code></pre><p><img src="figures/covid_6_1.png" alt/></p><p>Subjectively this prior seems reasonable. It is perhaps too concentrated on relatively fast epidemics. I may alter it, but it’s what I used for the current results.</p><h2 id="Estimation-1"><a class="docs-heading-anchor" href="#Estimation-1">Estimation</a><a class="docs-heading-anchor-permalink" href="#Estimation-1" title="Permalink"></a></h2><p>We estimate the model by MCMC. Specifically, we use the <a href="https://github.com/TuringLang/Turing.jl">Turing.jl</a> package (Ge, Xu, and Ghahramani <a href="#ref-ge2018t">2018</a>) . For sampling, we use the No-U-Turn-Sampler variant of Hamiltonian Monte Carlo. In the results below we use 4 chains with 1000 warmup iterations, and 1000 iterations for the results.</p><h2 id="Canada-1"><a class="docs-heading-anchor" href="#Canada-1">Canada</a><a class="docs-heading-anchor-permalink" href="#Canada-1" title="Permalink"></a></h2><p>We estimate the model with the following code. It takes about an hour.</p><pre><code class="language-julia">canada = CountryData(covdf, &quot;Canada&quot;);</code></pre><pre><code class="language-julia">canmod = countrymodel(canada)
+cc = Turing.psample(canmod, NUTS(0.65), 2000, 4)
+import JLD2
+JLD2.@save &quot;canada_$(Dates.today()).jld2&quot; cc</code></pre><pre><code class="language-julia">JLD2.@load &quot;canada_2020-03-28.jld2&quot; cc;</code></pre><h3 id="Estimates-1"><a class="docs-heading-anchor" href="#Estimates-1">Estimates</a><a class="docs-heading-anchor-permalink" href="#Estimates-1" title="Permalink"></a></h3><pre><code class="language-julia">describe(cc)</code></pre><pre><code class="language-none">2-element Array{MCMCChains.ChainDataFrame,1}
+
+Summary Statistics
+  parameters     mean     std  naive_se    mcse       ess   r_hat
+  ──────────  ───────  ──────  ────────  ──────  ────────  ──────
+           a   0.3088  0.2412    0.0038  0.0231   89.6474  1.0359
+         pE0   0.0000  0.0000    0.0000  0.0000   70.5632  1.0856
+        p[1]   0.1042  0.1802    0.0028  0.0271   16.0643  2.4066
+        p[2]   0.1835  0.1769    0.0028  0.0205   21.5262  1.2919
+        sigC  55.9872  5.3305    0.0843  0.4254  151.1913  1.0043
+        sigD   1.2701  0.1226    0.0019  0.0091  156.7255  1.0465
+       sigRc  17.4322  1.4134    0.0223  0.0887  303.4507  1.0111
+        β[1]   0.5243  0.3414    0.0054  0.0402   26.0625  1.1952
+        β[2]   0.9836  0.6433    0.0102  0.0441  170.9821  1.0298
+        γ[1]   0.0504  0.1739    0.0027  0.0222   19.6993  1.3554
+        γ[2]   0.2633  0.2855    0.0045  0.0318   26.4008  1.2485
+           τ   1.4733  1.2375    0.0196  0.1117   60.5718  1.0828
+
+Quantiles
+  parameters     2.5%    25.0%    50.0%    75.0%    97.5%
+  ──────────  ───────  ───────  ───────  ───────  ───────
+           a   0.0750   0.1199   0.2164   0.4248   0.9082
+         pE0   0.0000   0.0000   0.0000   0.0000   0.0000
+        p[1]   0.0021   0.0057   0.0098   0.1192   0.6038
+        p[2]   0.0024   0.0044   0.1515   0.2911   0.5979
+        sigC  46.3921  52.1740  55.7451  59.4129  66.9490
+        sigD   1.0686   1.1820   1.2583   1.3417   1.5536
+       sigRc  14.9106  16.3755  17.3844  18.3851  20.2662
+        β[1]   0.0931   0.3109   0.4274   0.6564   1.4965
+        β[2]   0.0789   0.5019   0.8582   1.3500   2.4933
+        γ[1]   0.0007   0.0042   0.0072   0.0098   0.6798
+        γ[2]   0.0022   0.0124   0.1721   0.4366   0.9681
+           τ   0.0092   0.3943   1.2458   2.2669   4.2214</code></pre><pre><code class="language-julia">plot(cc)</code></pre><p><img src="figures/covid_11_1.png" alt/></p><h3 id="Fit-1"><a class="docs-heading-anchor" href="#Fit-1">Fit</a><a class="docs-heading-anchor-permalink" href="#Fit-1" title="Permalink"></a></h3><pre><code class="language-julia">sdf = simtrajectories(cc, canada, 1:150)
+f = plotvars(sdf, canada)
+f.fit</code></pre><p><img src="figures/covid_12_1.png" alt/></p><h3 id="Implications-1"><a class="docs-heading-anchor" href="#Implications-1">Implications</a><a class="docs-heading-anchor-permalink" href="#Implications-1" title="Permalink"></a></h3><pre><code class="language-julia">for fig in f.trajectories
+  display(fig)
+end</code></pre><p><img src="figures/covid_13_1.png" alt/> <img src="figures/covid_13_2.png" alt/> <img src="figures/covid_13_3.png" alt/> <img src="figures/covid_13_4.png" alt/> <img src="figures/covid_13_5.png" alt/> <img src="figures/covid_13_6.png" alt/> <img src="figures/covid_13_7.png" alt/> <img src="figures/covid_13_8.png" alt/> <img src="figures/covid_13_9.png" alt/> <img src="figures/covid_13_10.png" alt/> <img src="figures/covid_13_11.png" alt/> <img src="figures/covid_13_12.png" alt/> <img src="figures/covid_13_13.png" alt/> <img src="figures/covid_13_14.png" alt/></p><h2 id="Italy-1"><a class="docs-heading-anchor" href="#Italy-1">Italy</a><a class="docs-heading-anchor-permalink" href="#Italy-1" title="Permalink"></a></h2><pre><code class="language-julia">italy = CountryData(covdf, &quot;Italy&quot;);</code></pre><pre><code class="language-julia">itmod = countrymodel(italy)
+ci = Turing.psample(itmod, NUTS(0.65), 2000, 4)
+import JLD2
+JLD2.@save &quot;italy_$(Dates.today()).jld2&quot; ci</code></pre><pre><code class="language-julia">JLD2.@load &quot;italy_2020-03-28.jld2&quot; ci;</code></pre><h3 id="Estimates-2"><a class="docs-heading-anchor" href="#Estimates-2">Estimates</a><a class="docs-heading-anchor-permalink" href="#Estimates-2" title="Permalink"></a></h3><pre><code class="language-julia">describe(ci)</code></pre><pre><code class="language-none">2-element Array{MCMCChains.ChainDataFrame,1}
+
+Summary Statistics
+  parameters      mean      std  naive_se    mcse       ess   r_hat
+  ──────────  ────────  ───────  ────────  ──────  ────────  ──────
+           a    0.1821   0.1772    0.0028  0.0227   16.0643  1.7055
+         pE0    0.0000   0.0000    0.0000  0.0000   16.0643  1.9103
+        p[1]    0.0006   0.0005    0.0000  0.0001   17.7140  1.4648
+        p[2]    0.0279   0.0209    0.0003  0.0033   16.0643  7.7417
+        sigC  439.9273  57.7940    0.9138  6.8324   16.6947  1.4674
+        sigD   86.8377  24.9425    0.3944  3.8063   16.0643  3.4150
+       sigRc  143.3689  11.7722    0.1861  0.6651  326.4399  1.0226
+        β[1]    1.3916   0.7617    0.0120  0.1072   16.2578  1.5885
+        β[2]    1.0478   0.7186    0.0114  0.0346  364.2459  1.0204
+        γ[1]    0.2462   0.2050    0.0032  0.0291   16.5431  1.5453
+        γ[2]    0.0251   0.0288    0.0005  0.0046   16.0643  7.8777
+           τ    0.0001   0.0000    0.0000  0.0000   91.1094  1.0839
+
+Quantiles
+  parameters      2.5%     25.0%     50.0%     75.0%     97.5%
+  ──────────  ────────  ────────  ────────  ────────  ────────
+           a    0.0723    0.0826    0.1013    0.1903    0.7374
+         pE0    0.0000    0.0000    0.0000    0.0000    0.0000
+        p[1]    0.0000    0.0001    0.0006    0.0010    0.0019
+        p[2]    0.0152    0.0155    0.0160    0.0278    0.0704
+        sigC  355.6332  397.2074  428.3271  473.3011  579.4653
+        sigD   39.8203   75.1277   96.2984  103.7001  117.2422
+       sigRc  122.0351  135.1442  142.6531  151.3082  167.1851
+        β[1]    0.3304    0.6782    1.3742    1.8807    2.9848
+        β[2]    0.0484    0.4801    0.9462    1.4963    2.7269
+        γ[1]    0.0002    0.0482    0.2242    0.3697    0.7272
+        γ[2]    0.0028    0.0075    0.0104    0.0267    0.0823
+           τ    0.0000    0.0001    0.0001    0.0001    0.0001</code></pre><pre><code class="language-julia">plot(ci)</code></pre><p><img src="figures/covid_18_1.png" alt/></p><h3 id="Fit-2"><a class="docs-heading-anchor" href="#Fit-2">Fit</a><a class="docs-heading-anchor-permalink" href="#Fit-2" title="Permalink"></a></h3><pre><code class="language-julia">sdf = simtrajectories(ci, italy, 1:150)
+f = plotvars(sdf, italy)
+f.fit</code></pre><p><img src="figures/covid_19_1.png" alt/></p><h3 id="Implications-2"><a class="docs-heading-anchor" href="#Implications-2">Implications</a><a class="docs-heading-anchor-permalink" href="#Implications-2" title="Permalink"></a></h3><pre><code class="language-julia">for fig in f.trajectories
+  display(fig)
+end</code></pre><p><img src="figures/covid_20_1.png" alt/> <img src="figures/covid_20_2.png" alt/> <img src="figures/covid_20_3.png" alt/> <img src="figures/covid_20_4.png" alt/> <img src="figures/covid_20_5.png" alt/> <img src="figures/covid_20_6.png" alt/> <img src="figures/covid_20_7.png" alt/> <img src="figures/covid_20_8.png" alt/> <img src="figures/covid_20_9.png" alt/> <img src="figures/covid_20_10.png" alt/> <img src="figures/covid_20_11.png" alt/> <img src="figures/covid_20_12.png" alt/> <img src="figures/covid_20_13.png" alt/> <img src="figures/covid_20_14.png" alt/></p><h1 id="About-this-document-1"><a class="docs-heading-anchor" href="#About-this-document-1">About this document</a><a class="docs-heading-anchor-permalink" href="#About-this-document-1" title="Permalink"></a></h1><p>This document was created using Weave.jl. The code is available in <a href="https://github.com/schrimpf/CovidSEIR.jl">on github</a>.</p><pre><code class="language-">&lt;!-- The same document generates both static webpages and a [jupyter notebook.](covid.ipynb)  --&gt;</code></pre><p>&lt;div id=&quot;refs&quot; class=&quot;references hanging-indent&quot; markdown=&quot;1&quot;&gt;</p><p>&lt;div id=&quot;ref-ge2018t&quot; markdown=&quot;1&quot;&gt;</p><p>Ge, Hong, Kai Xu, and Zoubin Ghahramani. 2018. “Turing: A Language for Flexible Probabilistic Inference.” In <em>International Conference on Artificial Intelligence and Statistics, AISTATS 2018, 9-11 April 2018, Playa Blanca, Lanzarote, Canary Islands, Spain</em>, 1682–90. <a href="http://proceedings.mlr.press/v84/ge18b.html">http://proceedings.mlr.press/v84/ge18b.html</a>.</p><p>&lt;/div&gt;</p><p>&lt;/div&gt;</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../functions/">Function Reference »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Sunday 29 March 2020 03:36">Sunday 29 March 2020</span>. Using Julia version 1.4.0.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

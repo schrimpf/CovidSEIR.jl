@@ -130,6 +130,10 @@
               <ul class="nav flex-column">
               </ul>
             </li>
+            <li class="nav-item" data-level="2"><a href="#south-korea" class="nav-link">South Korea</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
               </ul>
             </li>
             
@@ -535,6 +539,95 @@ end
 <img alt="" src="../figures/covid_21_13.png" /> <img alt="" src="../figures/covid_21_14.png" /></p>
 <p>The posterior estimates imply that Italy has about 10 times as many
 undetected cases as detected.</p>
+<h2 id="south-korea">South Korea<a class="headerlink" href="#south-korea" title="Permanent link">&para;</a></h2>
+<pre><code class="julia">korea = CountryData(covdf, &quot;Korea, South&quot;)
+</code></pre>
+
+<pre><code>CountryData{Float64,Int64}(5.1635256e7, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10  …  
+58, 59, 60, 61, 62, 63, 64, 65, 66, 67], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+, 0.0, 0.0, 0.0  …  91.0, 94.0, 102.0, 111.0, 111.0, 120.0, 126.0, 131.0, 1
+39.0, 144.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  1540.0,
+ 1540.0, 1540.0, 2909.0, 2909.0, 3507.0, 3730.0, 4144.0, 4528.0, 4811.0], [
+1.0, 1.0, 2.0, 2.0, 3.0, 4.0, 4.0, 4.0, 4.0, 11.0  …  6934.0, 7018.0, 7157.
+0, 5941.0, 5941.0, 5410.0, 5281.0, 4966.0, 4665.0, 4523.0])
+</code></pre>
+<pre><code class="julia">using Turing
+mdl = countrymodel(korea)
+cc = Turing.psample(mdl, NUTS(0.65), 2000, 4)
+import JLD2
+JLD2.@save &quot;$jmddir/korea_$(Dates.today()).jld2&quot; cc
+</code></pre>
+
+<pre><code class="julia">JLD2.@load &quot;$jmddir/korea_2020-03-29.jld2&quot; ci;
+</code></pre>
+
+<pre><code>Error: KeyError: key "ci" not found
+</code></pre>
+<h3 id="estimates_2">Estimates<a class="headerlink" href="#estimates_2" title="Permanent link">&para;</a></h3>
+<pre><code class="julia">plot(cc)
+</code></pre>
+
+<p><img alt="" src="../figures/covid_25_1.png" /></p>
+<pre><code class="julia">describe(cc)
+</code></pre>
+
+<pre><code>2-element Array{ChainDataFrame,1}
+
+Summary Statistics
+  parameters     mean     std  naive_se    mcse       ess   r_hat
+  ──────────  ───────  ──────  ────────  ──────  ────────  ──────
+           a   0.3088  0.2412    0.0038  0.0231   89.6474  1.0359
+         pE0   0.0000  0.0000    0.0000  0.0000   70.5632  1.0856
+        p[1]   0.1042  0.1802    0.0028  0.0271   16.0643  2.4066
+        p[2]   0.1835  0.1769    0.0028  0.0205   21.5262  1.2919
+        sigC  55.9872  5.3305    0.0843  0.4254  151.1913  1.0043
+        sigD   1.2701  0.1226    0.0019  0.0091  156.7255  1.0465
+       sigRc  17.4322  1.4134    0.0223  0.0887  303.4507  1.0111
+        β[1]   0.5243  0.3414    0.0054  0.0402   26.0625  1.1952
+        β[2]   0.9836  0.6433    0.0102  0.0441  170.9821  1.0298
+        γ[1]   0.0504  0.1739    0.0027  0.0222   19.6993  1.3554
+        γ[2]   0.2633  0.2855    0.0045  0.0318   26.4008  1.2485
+           τ   1.4733  1.2375    0.0196  0.1117   60.5718  1.0828
+
+Quantiles
+  parameters     2.5%    25.0%    50.0%    75.0%    97.5%
+  ──────────  ───────  ───────  ───────  ───────  ───────
+           a   0.0750   0.1199   0.2164   0.4248   0.9082
+         pE0   0.0000   0.0000   0.0000   0.0000   0.0000
+        p[1]   0.0021   0.0057   0.0098   0.1192   0.6038
+        p[2]   0.0024   0.0044   0.1515   0.2911   0.5979
+        sigC  46.3921  52.1740  55.7451  59.4129  66.9490
+        sigD   1.0686   1.1820   1.2583   1.3417   1.5536
+       sigRc  14.9106  16.3755  17.3844  18.3851  20.2662
+        β[1]   0.0931   0.3109   0.4274   0.6564   1.4965
+        β[2]   0.0789   0.5019   0.8582   1.3500   2.4933
+        γ[1]   0.0007   0.0042   0.0072   0.0098   0.6798
+        γ[2]   0.0022   0.0124   0.1721   0.4366   0.9681
+           τ   0.0092   0.3943   1.2458   2.2669   4.2214
+</code></pre>
+<h3 id="fit_2">Fit<a class="headerlink" href="#fit_2" title="Permanent link">&para;</a></h3>
+<pre><code class="julia">sdf = simtrajectories(cc, korea, 1:150)
+f = plotvars(sdf, korea)
+plot!(f.fit, xlim=nothing)
+</code></pre>
+
+<p><img alt="" src="../figures/covid_27_1.png" /></p>
+<p>We see that the model does not fit the rapid drop in new cases in South
+Korea. This may be caused by the model’s implausible assumption that
+transmission and testing rates are constant over time.</p>
+<h3 id="implications_2">Implications<a class="headerlink" href="#implications_2" title="Permanent link">&para;</a></h3>
+<pre><code class="julia">for fig in f.trajectories
+  display(plot(fig, xlim=nothing))
+end
+</code></pre>
+
+<p><img alt="" src="../figures/covid_28_1.png" /> <img alt="" src="../figures/covid_28_2.png" />
+<img alt="" src="../figures/covid_28_3.png" /> <img alt="" src="../figures/covid_28_4.png" />
+<img alt="" src="../figures/covid_28_5.png" /> <img alt="" src="../figures/covid_28_6.png" />
+<img alt="" src="../figures/covid_28_7.png" /> <img alt="" src="../figures/covid_28_8.png" />
+<img alt="" src="../figures/covid_28_9.png" /> <img alt="" src="../figures/covid_28_10.png" />
+<img alt="" src="../figures/covid_28_11.png" /> <img alt="" src="../figures/covid_28_12.png" />
+<img alt="" src="../figures/covid_28_13.png" /> <img alt="" src="../figures/covid_28_14.png" /></p>
 <h1 id="extensions">Extensions<a class="headerlink" href="#extensions" title="Permanent link">&para;</a></h1>
 <ol>
 <li>Estimate single country model for more countries/areas.</li>

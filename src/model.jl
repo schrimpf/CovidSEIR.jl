@@ -58,9 +58,9 @@ function CountryData(df::DataFrames.AbstractDataFrame, country::String, tstart=1
   ss = (df.Country .== country)
   dead, conf, reco = if sum(ss .& .!ismissing.(df.Province))>0
     inc = ss .& .!ismissing.(df.Province)
-    dead= by(df[inc, :], [:Country, :Date], :deaths => sum).deaths_sum
-    conf=by(df[inc, :], [:Country, :Date], :confirmed => sum).confirmed_sum
-    reco=by(df[inc, :], [:Country, :Date], :recovered => sum).recovered_sum
+    dead=DataFrames.by(df[inc, :], [:Country, :Date], :deaths => sum).deaths_sum
+    conf=DataFrames.by(df[inc, :], [:Country, :Date], :confirmed => sum).confirmed_sum
+    reco=DataFrames.by(df[inc, :], [:Country, :Date], :recovered => sum).recovered_sum
     dead, conf, reco
   else
     fill(missing, sum(ss)), fill(missing, sum(ss)), fill(missing, sum(ss))
@@ -313,7 +313,7 @@ function plotvars(df::DataFrames.AbstractDataFrame,
            :pmild=>"P(mild|detected)",
            :tpmild=>"P(mild)" ]
   tfigs = Vector{typeof(fit)}(undef, 0)
-  daylim = (Dates.today() - Dates.Day(21), Dates.today() + Dates.Day(28))
+  daylim = (Dates.today() - Dates.Day(21), Dates.today() + Dates.Day(60))
   c = 1
   for v in vars    
     meanpred, q5, q95 = varmatrix(adf,[String(v[1])], x->x)

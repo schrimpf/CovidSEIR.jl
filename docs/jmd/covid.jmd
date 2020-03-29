@@ -29,7 +29,8 @@ using Pkg
   #using CovidSEIR
 #end
 using Plots
-ENV["GKS_ENCODING"] = "utf-8";
+ENV["GKS_ENCODING"] = "utf-8"
+using DataFrames, JLD2
 ```
 
 # Introduction
@@ -189,7 +190,7 @@ Hamiltonian Monte Carlo. In the results below we use 4 chains with
 We estimate the model with the following code. It takes about an hour.
 
 ```julia
-canada = CountryData(covdf, "Canada")
+canada = CountryData(covdf, "Canada");
 ```
 
 ```julia; eval=false
@@ -200,7 +201,7 @@ JLD2.@save "canada_$(Dates.today()).jld2" cc
 ```
 
 ```julia
-JLD2.@load "canada_2020-03-28.jld2" cc
+JLD2.@load "canada_2020-03-28.jld2" cc;
 ```
 
 ### Estimates
@@ -223,14 +224,16 @@ f.fit
 ### Implications
 
 ```julia
-print.(f.trajectories)
+for fig in f.trajectories
+  display(fig)
+end
 ```
 
 
 ## Italy
 
 ```julia
-italy = CountryData(covdf, "Italy")
+italy = CountryData(covdf, "Italy");
 ```
 
 ```julia; eval=false
@@ -240,7 +243,7 @@ import JLD2
 JLD2.@save "italy_$(Dates.today()).jld2" ci
 ```
 ```julia
-JLD2.@load "italy_2020-03-28.jld2" ci
+JLD2.@load "italy_2020-03-28.jld2" ci;
 ```
 
 ### Estimates
@@ -263,7 +266,9 @@ f.fit
 ### Implications
 
 ```julia
-print.(f.trajectories)
+for fig in f.trajectories
+  display(fig)
+end
 ```
 
 

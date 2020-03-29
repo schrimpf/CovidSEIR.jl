@@ -10,10 +10,7 @@ src="covid.jmd"
 if runweave
   println("weaving markdown for $src")
   using Weave
-  weave(src,out_path=".",
-        cache=:user, cache_path="weavecache",
-        doctype="github", mod=Main,
-        args=Dict("md" => true))
+  weave(src,out_path=".", cache=:user, cache_path="weavecache",  doctype="github", mod=Main, args=Dict("md" => true))
   pdin = "covid.md"
   pdout = "../src/covid.md"
   BIB = "covid.bib"

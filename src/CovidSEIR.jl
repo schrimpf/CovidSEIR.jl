@@ -8,7 +8,7 @@ using Distributions
 using Turing
 using LinearAlgebra: dot
 using Statistics
-using Plots
+using Plots, StatsPlots
 
 include("data.jl")
 include("model.jl")

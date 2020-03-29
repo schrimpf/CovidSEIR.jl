@@ -209,7 +209,26 @@ function priorreport(priors=defaultcountrypriors(), T=100, population=1e7;
   
   combofig=plot(fig..., title=["Active Confirmed Cases" "Recoveries" "Deaths"], link=:x, layout=(3,1))
 
-  return(all=combofig, figs=fig)
+  @model pm(priors, ::Type{R}=Float64) where  {R <: Real} =begin
+    L = 2
+    β = Vector{R}(undef, 2)
+    p = Vector{R}(undef, 2)
+    γ = Vector{R}(undef, 2)
+    a ~ priors["a"] 
+    for i in 1:L
+      p[i] ~ priors["p[$i]"]
+      γ[i] ~ priors["γ[$i]"]
+      β[i] ~ priors["β[$i]"]
+    end
+    τ ~ priors["τ"]
+    pE0 ~ priors["pE0"]
+    sigD  ~ priors["sigD"]
+    sigC ~ priors["sigC"]
+    sigRc ~ priors["sigRc"]
+  end
+  pc = sample(pm(defaultcountrypriors()), NUTS(0.65), 500)
+  
+  return(all=combofig, figs=fig, tbl=describe(pc))
 end
 
 """

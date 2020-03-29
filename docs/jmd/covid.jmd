@@ -29,8 +29,9 @@ using Pkg
   #using CovidSEIR
 #end
 using Plots
-ENV["GKS_ENCODING"] = "utf-8"
+Plots.pyplot()
 using DataFrames, JLD2
+jmddir = normpath(joinpath(dirname(Base.find_package("CovidSEIR")),"..","docs","jmd"))
 ```
 
 # Introduction
@@ -86,7 +87,7 @@ $$
 \dot{S} & = -S \left( \sum_i \beta_i (I_i + C_i) right) \\
 \dot{E} & = S \left( \sum_i \beta_i (I_i + C_i) right) - a E  \\
 \dot{I_1} & = a E - \gamma_1 I_1 - p_1 I_1 - \tau C_1 \\
-\dot{I_2} & = 0
+\dot{I_2} & = 0 \\
 \dot{C_1}  & =  \tau I - \gamma_1 C_1 - p_1 C_1 \\
 \dot{C_2} & = p_1(I_1 + C_1) - \gamma_2 C_2 - p_2 C_2 \\
 \dot{R_u}  & = \sum_i \gamma_i I_i \\
@@ -132,6 +133,15 @@ c_t - d_t - r_t \sim & N(C_1(t) + C_2(t), \sigma_C^2)
 \end{align*}
 $$
 
+## Model Limitations
+
+An important limitation is that the model assumes all parameters are
+constant over time. This is almost surely incorrect. Most countries
+have implemented quarantine and distancing policies to attempt to
+reduce $\beta$. Efforts have also been made to increase
+$\tau$. Innovations in treatment and crowding of the medical system
+likely lead to variation in $\gamma$ and $p$. 
+    
 # Single Country Estimates
 
 ## Priors
@@ -140,6 +150,7 @@ We use the follow prior distributions. The means of these are loosely
 based on [Hill's defaults](https://alhill.shinyapps.io/COVID19seir/).
 
 ```julia; eval=false
+using Distributions
 defaultcountrypriors() = Dict(
   "a" => truncated(Normal(1/5, 3), 1/14, 1.0), 
   "p[1]" => truncated(Normal(0.05, 0.3), 0, 1),
@@ -152,16 +163,21 @@ defaultcountrypriors() = Dict(
   "pE0" => truncated(Normal(0.001, 0.1), 0, 1),
   "sigD" => InverseGamma(2,3),
   "sigC" => InverseGamma(2,3),
-  "sigRc" => InverseGamma(2,3))  
+  "sigRc" => InverseGamma(2,3))
 ```
 
+Summary statistics of draws from this prior distribution are below.
+
+```julia
+pr = priorreport()
+pr.tbl
+```
 The following plots show the implications of this prior for the
 observed data.  The faint lines on each figure shows 1000 trajectories
 sampled from the prior distribution. The black line is the prior
 mean. The shaded region is a pointwise 90% prior credible interval. 
 
 ```julia
-pr = priorreport()
 plot(pr.figs[1], xlabel="Days", ylabel="Portion of population")
 ```
 
@@ -194,24 +210,32 @@ canada = CountryData(covdf, "Canada");
 ```
 
 ```julia; eval=false
+using Turing
 canmod = countrymodel(canada)
 cc = Turing.psample(canmod, NUTS(0.65), 2000, 4)
 import JLD2
-JLD2.@save "canada_$(Dates.today()).jld2" cc
+JLD2.@save "$jmddir/canada_$(Dates.today()).jld2" cc
 ```
 
 ```julia
-JLD2.@load "canada_2020-03-28.jld2" cc;
+JLD2.@load "$jmddir/canada_2020-03-28.jld2" cc;
 ```
 
 ### Estimates
-```julia
-describe(cc)
-```
 
 ```julia
 plot(cc)
 ```
+
+We can see that there might be convergence issues. There are large
+differences between the four chains for some parameters.
+
+```julia
+describe(cc)
+```
+
+The parameter estimates are generally not very precise. 
+
 
 ### Fit
 
@@ -221,13 +245,30 @@ f = plotvars(sdf, canada)
 f.fit
 ```
 
+In this figure, solid lines are observed data, dashed lines are
+posterior means, and the shaded region is a pointwise 90\% credible
+interval. 
+
+Note that the last day of data used in the estimation was March 27th.
+The fit appears quite good. The fitted estimates are also remarkably
+precise. Although individual parameters are not precisely estimated,
+the combination of them that gives rise to the observed data is
+precisely estimated. 
+
 ### Implications
+
+We now look at the model's projections for some observed and unobserved variables. 
 
 ```julia
 for fig in f.trajectories
   display(fig)
 end
 ```
+
+In general we see a similar pattern as noted above: the posteriors for
+observed variables are fairly precise. However, the posteriors for
+unobserved variables, such as the portion of undetected infections and
+the portion of mild infections, are very imprecise. 
 
 
 ## Italy
@@ -240,20 +281,24 @@ italy = CountryData(covdf, "Italy");
 itmod = countrymodel(italy)
 ci = Turing.psample(itmod, NUTS(0.65), 2000, 4)
 import JLD2
-JLD2.@save "italy_$(Dates.today()).jld2" ci
+JLD2.@save "$jmddir/italy_$(Dates.today()).jld2" ci
 ```
 ```julia
-JLD2.@load "italy_2020-03-28.jld2" ci;
+JLD2.@load "$jmddir/italy_2020-03-28.jld2" ci;
 ```
 
 ### Estimates
 ```julia
-describe(ci)
+plot(ci)
 ```
 
 ```julia
-plot(ci)
+describe(ci)
 ```
+
+Compared to Canada, Italy has a very low estimate of
+$\tau$. Apparently a high number of undetected cases helps to explain
+the rapid growth in confirmed cases in Italy.
 
 ### Fit
 
@@ -263,6 +308,9 @@ f = plotvars(sdf, italy)
 f.fit
 ```
 
+As with Canada, the fit is very good, and the posterior distribution
+of observables is very precise.
+
 ### Implications
 
 ```julia
@@ -271,11 +319,21 @@ for fig in f.trajectories
 end
 ```
 
+The posterior estimates imply that Italy has about 10 times as many
+undetected cases as detected.
+
+
+
+# Extensions
+
+1. Estimate single country model for more countries/areas.
+2. Estimate a multi-country model with some parameters common across
+   countries and others multi-level distributions.
+3. Allow time varying parameters. 
 
 # About this document
 
 This document was created using Weave.jl. The code is available in [on
 github](https://github.com/schrimpf/CovidSEIR.jl).
 
-<!-- The same document generates both static webpages and a [jupyter notebook.](covid.ipynb)  -->
     

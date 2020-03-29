@@ -1,0 +1,41 @@
+site_name:        "CovidSEIR.jl"
+repo_url:         https://github.com/schrimpf/CovidSEIR.jl
+site_description: Bayesian Estimate of SEIR model of Corona Virus
+site_author:      Paul Schrimpf
+copyright:        Paul Schrimpf
+
+theme:
+    name: journal
+    highlightjs: true
+       - julia
+
+extra_css:
+  - assets/Documenter.css
+  - assets/extra.css
+
+extra_javascript:
+  - https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML
+  - assets/mathjaxhelper.js
+
+markdown_extensions:
+  - extra
+  - tables
+  - meta
+  - fenced_code
+  - smarty
+  - toc:
+     permalink: True
+  - sane_lists
+  - admonition
+  - footnotes
+  - mdx_math
+  - attr_list
+
+docs_dir: 'build'
+
+nav:
+  - Package Docs: index.md
+  - SEIR Model and Results: covid.md
+  - About:
+    - License: license.md
+    

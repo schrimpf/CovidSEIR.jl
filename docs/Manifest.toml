@@ -360,6 +360,12 @@ git-tree-sha1 = "646ebc3db49889ffeb4c36f89e5d82c6a26295ff"
 uuid = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 version = "0.24.7"
 
+[[DocumenterMarkdown]]
+deps = ["Documenter", "Test"]
+git-tree-sha1 = "c302ba512683c3db462ee4eff718ae6fedcbf380"
+uuid = "997ab1e6-3595-5248-9280-8efb232c3433"
+version = "0.2.0"
+
 [[DynamicPPL]]
 deps = ["AbstractMCMC", "Bijectors", "Distributions", "MacroTools"]
 git-tree-sha1 = "4a86f4d236808e1a92bff10e71833f39c54ff075"

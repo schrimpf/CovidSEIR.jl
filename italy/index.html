@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <meta name="author" content="Paul Schrimpf">
+        
+        <link rel="shortcut icon" href="../img/favicon.ico">
+        <title>Italy - CovidSEIR.jl</title>
+        <link href="../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/atelier-forest-light.min.css">
+        <link href="../assets/Documenter.css" rel="stylesheet">
+        <link href="../assets/extra.css" rel="stylesheet">
+
+        <script src="../js/jquery-1.10.2.min.js" defer></script>
+        <script src="../js/bootstrap.min.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="..">CovidSEIR.jl</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="navitem">
+                                <a href=".." class="nav-link">Package Docs</a>
+                            </li>
+                            <li class="dropdown active">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">SEIR Model and Results <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../covid/" class="dropdown-item">Model</a>
+</li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Results</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../canada/" class="dropdown-item">Canada</a>
+</li>
+            
+<li>
+    <a href="./" class="dropdown-item active">Italy</a>
+</li>
+            
+<li>
+    <a href="../korea/" class="dropdown-item">South Korea</a>
+</li>
+            
+<li>
+    <a href="../china/" class="dropdown-item">China</a>
+</li>
+    </ul>
+  </li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">About <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../license/" class="dropdown-item">License</a>
+</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../canada/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../korea/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="https://github.com/schrimpf/CovidSEIR.jl/edit/master/docs/italy.md" class="nav-link"><i class="fa fa-github"></i> Edit on GitHub</a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-light navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-level="1"><a href="#italy" class="nav-link">Italy</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-level="2"><a href="#estimates" class="nav-link">Estimates</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#fit" class="nav-link">Fit</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#implications" class="nav-link">Implications</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<p><a href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a></p>
+<p>This work is licensed under a <a href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike
+4.0 International
+License</a></p>
+<pre><code class="julia">using CovidSEIR,  Plots, DataFrames, JLD2, StatsPlots
+Plots.pyplot()
+jmddir = normpath(joinpath(dirname(Base.find_package(&quot;CovidSEIR&quot;)),&quot;..&quot;,&quot;docs&quot;,&quot;jmd&quot;))
+covdf = covidjhudata()
+describe(covdf)
+</code></pre>
+
+<pre><code>11×8 DataFrame. Omitted printing of 2 columns
+│ Row │ variable  │ mean      │ min         │ median    │ max        │ nuni
+que │
+│     │ Symbol    │ Union…    │ Any         │ Union…    │ Any        │ Unio
+n…  │
+├─────┼───────────┼───────────┼─────────────┼───────────┼────────────┼─────
+────┤
+│ 1   │ Date      │           │ 2020-01-22  │           │ 2020-03-28 │ 67  
+    │
+│ 2   │ confirmed │ 486.367   │ 0           │ 0.0       │ 121478     │     
+    │
+│ 3   │ Province  │           │ Alberta     │           │ Zhejiang   │ 79  
+    │
+│ 4   │ Country   │           │ Afghanistan │           │ Zimbabwe   │ 177 
+    │
+│ 5   │ Lat       │ 22.0528   │ -41.4545    │ 23.8298   │ 71.7069    │     
+    │
+│ 6   │ Long      │ 23.2675   │ -135.0      │ 20.9394   │ 178.065    │     
+    │
+│ 7   │ deaths    │ 18.9005   │ 0           │ 0.0       │ 10023      │     
+    │
+│ 8   │ recovered │ 162.121   │ 0           │ 0.0       │ 62098      │     
+    │
+│ 9   │ iso2c     │           │ AD          │           │ ZW         │ 170 
+    │
+│ 10  │ cpop      │ 2.27709e8 │ 33785.0     │ 2.49924e7 │ 1.39273e9  │     
+    │
+│ 11  │ ppop      │ 2.74801e7 │ 41078       │ 1.557e7   │ 111690000  │     
+    │
+</code></pre>
+<h1 id="italy">Italy<a class="headerlink" href="#italy" title="Permanent link">&para;</a></h1>
+<pre><code class="julia">italy = CountryData(covdf, &quot;Italy&quot;);
+</code></pre>
+
+<pre><code class="julia">itmod = countrymodel(italy)
+ci = Turing.psample(itmod, NUTS(0.65), 2000, 4)
+import JLD2
+JLD2.@save &quot;$jmddir/italy_$(Dates.today()).jld2&quot; ci
+</code></pre>
+
+<pre><code class="julia">JLD2.@load &quot;$jmddir/italy_2020-03-28.jld2&quot; ci;
+</code></pre>
+
+<h2 id="estimates">Estimates<a class="headerlink" href="#estimates" title="Permanent link">&para;</a></h2>
+<pre><code class="julia">plot(ci)
+</code></pre>
+
+<p><img alt="" src="../figures/italy_5_1.png" /></p>
+<pre><code class="julia">describe(ci)
+</code></pre>
+
+<pre><code>2-element Array{MCMCChains.ChainDataFrame,1}
+
+Summary Statistics
+  parameters      mean      std  naive_se    mcse       ess   r_hat
+  ──────────  ────────  ───────  ────────  ──────  ────────  ──────
+           a    0.1821   0.1772    0.0028  0.0227   16.0643  1.7055
+         pE0    0.0000   0.0000    0.0000  0.0000   16.0643  1.9103
+        p[1]    0.0006   0.0005    0.0000  0.0001   17.7140  1.4648
+        p[2]    0.0279   0.0209    0.0003  0.0033   16.0643  7.7417
+        sigC  439.9273  57.7940    0.9138  6.8324   16.6947  1.4674
+        sigD   86.8377  24.9425    0.3944  3.8063   16.0643  3.4150
+       sigRc  143.3689  11.7722    0.1861  0.6651  326.4399  1.0226
+        β[1]    1.3916   0.7617    0.0120  0.1072   16.2578  1.5885
+        β[2]    1.0478   0.7186    0.0114  0.0346  364.2459  1.0204
+        γ[1]    0.2462   0.2050    0.0032  0.0291   16.5431  1.5453
+        γ[2]    0.0251   0.0288    0.0005  0.0046   16.0643  7.8777
+           τ    0.0001   0.0000    0.0000  0.0000   91.1094  1.0839
+
+Quantiles
+  parameters      2.5%     25.0%     50.0%     75.0%     97.5%
+  ──────────  ────────  ────────  ────────  ────────  ────────
+           a    0.0723    0.0826    0.1013    0.1903    0.7374
+         pE0    0.0000    0.0000    0.0000    0.0000    0.0000
+        p[1]    0.0000    0.0001    0.0006    0.0010    0.0019
+        p[2]    0.0152    0.0155    0.0160    0.0278    0.0704
+        sigC  355.6332  397.2074  428.3271  473.3011  579.4653
+        sigD   39.8203   75.1277   96.2984  103.7001  117.2422
+       sigRc  122.0351  135.1442  142.6531  151.3082  167.1851
+        β[1]    0.3304    0.6782    1.3742    1.8807    2.9848
+        β[2]    0.0484    0.4801    0.9462    1.4963    2.7269
+        γ[1]    0.0002    0.0482    0.2242    0.3697    0.7272
+        γ[2]    0.0028    0.0075    0.0104    0.0267    0.0823
+           τ    0.0000    0.0001    0.0001    0.0001    0.0001
+</code></pre>
+<p>Compared to Canada, Italy has a very low estimate of $\tau$. Apparently
+a high number of undetected cases helps to explain the rapid growth in
+confirmed cases in Italy.</p>
+<h2 id="fit">Fit<a class="headerlink" href="#fit" title="Permanent link">&para;</a></h2>
+<pre><code class="julia">sdf = simtrajectories(ci, italy, 1:150)
+f = plotvars(sdf, italy)
+f.fit
+</code></pre>
+
+<p><img alt="" src="../figures/italy_7_1.png" /></p>
+<p>As with Canada, the fit is very good, and the posterior distribution of
+observables is very precise.</p>
+<h2 id="implications">Implications<a class="headerlink" href="#implications" title="Permanent link">&para;</a></h2>
+<pre><code class="julia">for fig in f.trajectories
+  display(fig)
+end
+</code></pre>
+
+<p><img alt="" src="../figures/italy_8_1.png" /> <img alt="" src="../figures/italy_8_2.png" />
+<img alt="" src="../figures/italy_8_3.png" /> <img alt="" src="../figures/italy_8_4.png" />
+<img alt="" src="../figures/italy_8_5.png" /> <img alt="" src="../figures/italy_8_6.png" />
+<img alt="" src="../figures/italy_8_7.png" /> <img alt="" src="../figures/italy_8_8.png" />
+<img alt="" src="../figures/italy_8_9.png" /> <img alt="" src="../figures/italy_8_10.png" />
+<img alt="" src="../figures/italy_8_11.png" /> <img alt="" src="../figures/italy_8_12.png" />
+<img alt="" src="../figures/italy_8_13.png" /> <img alt="" src="../figures/italy_8_14.png" /></p>
+<p>The posterior estimates imply that Italy has about 10 times as many
+undetected cases as detected.</p></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+                <p>Paul Schrimpf</p>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = "..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../js/base.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML" defer></script>
+        <script src="../assets/mathjaxhelper.js" defer></script>
+        <script src="../search/main.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    From here you can search these documents. Enter
+                    your search terms below.
+                </p>
+                <form>
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

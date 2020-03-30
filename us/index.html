@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <meta name="author" content="Paul Schrimpf">
+        
+        <link rel="shortcut icon" href="../img/favicon.ico">
+        <title>Us - CovidSEIR.jl</title>
+        <link href="../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/atelier-forest-light.min.css">
+        <link href="../assets/Documenter.css" rel="stylesheet">
+        <link href="../assets/extra.css" rel="stylesheet">
+
+        <script src="../js/jquery-1.10.2.min.js" defer></script>
+        <script src="../js/bootstrap.min.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="..">CovidSEIR.jl</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="navitem">
+                                <a href=".." class="nav-link">Package Docs</a>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">SEIR Model and Results <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../covid/" class="dropdown-item">Model</a>
+</li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Results</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../canada/" class="dropdown-item">Canada</a>
+</li>
+            
+<li>
+    <a href="../italy/" class="dropdown-item">Italy</a>
+</li>
+            
+<li>
+    <a href="../korea/" class="dropdown-item">South Korea</a>
+</li>
+            
+<li>
+    <a href="../china/" class="dropdown-item">China</a>
+</li>
+    </ul>
+  </li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">About <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../license/" class="dropdown-item">License</a>
+</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a href="https://github.com/schrimpf/CovidSEIR.jl/edit/master/docs/us.md" class="nav-link"><i class="fa fa-github"></i> Edit on GitHub</a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-light navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-level="1"><a href="#united-states" class="nav-link">United States</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-level="2"><a href="#estimates" class="nav-link">Estimates</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#fit" class="nav-link">Fit</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#implications" class="nav-link">Implications</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<p><a href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a></p>
+<p>This work is licensed under a <a href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike
+4.0 International
+License</a></p>
+<pre><code class="julia">using CovidSEIR,  Plots, DataFrames, JLD2, StatsPlots
+Plots.pyplot()
+jmddir = normpath(joinpath(dirname(Base.find_package(&quot;CovidSEIR&quot;)),&quot;..&quot;,&quot;docs&quot;,&quot;jmd&quot;))
+covdf = covidjhudata()
+describe(covdf)
+</code></pre>
+
+<pre><code>11×8 DataFrame. Omitted printing of 2 columns
+│ Row │ variable  │ mean      │ min         │ median    │ max        │ nuni
+que │
+│     │ Symbol    │ Union…    │ Any         │ Union…    │ Any        │ Unio
+n…  │
+├─────┼───────────┼───────────┼─────────────┼───────────┼────────────┼─────
+────┤
+│ 1   │ Date      │           │ 2020-01-22  │           │ 2020-03-29 │ 68  
+    │
+│ 2   │ confirmed │ 521.072   │ 0           │ 0.0       │ 140886     │     
+    │
+│ 3   │ Province  │           │ Alberta     │           │ Zhejiang   │ 79  
+    │
+│ 4   │ Country   │           │ Afghanistan │           │ Zimbabwe   │ 177 
+    │
+│ 5   │ Lat       │ 22.0528   │ -41.4545    │ 23.8298   │ 71.7069    │     
+    │
+│ 6   │ Long      │ 23.2675   │ -135.0      │ 20.9394   │ 178.065    │     
+    │
+│ 7   │ deaths    │ 20.5945   │ 0           │ 0.0       │ 10779      │     
+    │
+│ 8   │ recovered │ 168.91    │ 0           │ 0.0       │ 62570      │     
+    │
+│ 9   │ iso2c     │           │ AD          │           │ ZW         │ 171 
+    │
+│ 10  │ cpop      │ 2.2813e8  │ 33785.0     │ 2.49924e7 │ 1.39273e9  │     
+    │
+│ 11  │ ppop      │ 2.74801e7 │ 41078       │ 1.557e7   │ 111690000  │     
+    │
+</code></pre>
+<h1 id="united-states">United States<a class="headerlink" href="#united-states" title="Permanent link">&para;</a></h1>
+<pre><code class="julia">using Dates
+us = CountryData(covdf, &quot;US&quot;)
+</code></pre>
+
+<pre><code>CountryData{Float64,Int64}(3.2716743e8, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10  …  
+59, 60, 61, 62, 63, 64, 65, 66, 67, 68], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+, 0.0, 0.0, 0.0  …  244.0, 307.0, 417.0, 557.0, 706.0, 942.0, 1209.0, 1581.
+0, 2026.0, 2467.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  1
+47.0, 176.0, 178.0, 178.0, 348.0, 361.0, 681.0, 869.0, 1072.0, 2665.0], [1.
+0, 1.0, 2.0, 2.0, 5.0, 5.0, 5.0, 5.0, 5.0, 7.0  …  18709.0, 25006.0, 32681.
+0, 43112.0, 52686.0, 64475.0, 81946.0, 99207.0, 118380.0, 135754.0])
+</code></pre>
+<pre><code class="julia">using Turing
+mdl = countrymodel(us)
+cc = Turing.psample(mdl, NUTS(0.65), 2000, 4)
+import JLD2
+JLD2.@save &quot;$jmddir/us_$(Dates.today()).jld2&quot; cc
+</code></pre>
+
+<pre><code class="julia">JLD2.@load &quot;$jmddir/us_2020-03-29.jld2&quot; cc;
+</code></pre>
+
+<pre><code>Error: SystemError: opening file "/home/paul/.julia/dev/CovidSEIR/docs/jmd/
+us_2020-03-29.jld2": No such file or directory
+</code></pre>
+<h2 id="estimates">Estimates<a class="headerlink" href="#estimates" title="Permanent link">&para;</a></h2>
+<pre><code class="julia">plot(cc)
+</code></pre>
+
+<pre><code>Error: UndefVarError: cc not defined
+</code></pre>
+<pre><code class="julia">describe(cc)
+</code></pre>
+
+<pre><code>Error: UndefVarError: cc not defined
+</code></pre>
+<h2 id="fit">Fit<a class="headerlink" href="#fit" title="Permanent link">&para;</a></h2>
+<pre><code class="julia">sdf = simtrajectories(cc, us, 1:150)
+</code></pre>
+
+<pre><code>Error: UndefVarError: cc not defined
+</code></pre>
+<pre><code class="julia">f = plotvars(sdf, us)
+</code></pre>
+
+<pre><code>Error: UndefVarError: sdf not defined
+</code></pre>
+<pre><code class="julia">plot(f.fit, xlim=nothing, ylim=nothing)
+</code></pre>
+
+<pre><code>Error: UndefVarError: f not defined
+</code></pre>
+<h2 id="implications">Implications<a class="headerlink" href="#implications" title="Permanent link">&para;</a></h2>
+<pre><code class="julia">for fig in f.trajectories
+  display(plot(fig, xlim=nothing))
+end
+</code></pre>
+
+<pre><code>Error: UndefVarError: f not defined
+</code></pre></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+                <p>Paul Schrimpf</p>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = "..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../js/base.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML" defer></script>
+        <script src="../assets/mathjaxhelper.js" defer></script>
+        <script src="../search/main.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    From here you can search these documents. Enter
+                    your search terms below.
+                </p>
+                <form>
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

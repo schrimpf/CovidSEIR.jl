@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <meta name="author" content="Paul Schrimpf">
+        
+        <link rel="shortcut icon" href="../img/favicon.ico">
+        <title>China - CovidSEIR.jl</title>
+        <link href="../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/atelier-forest-light.min.css">
+        <link href="../assets/Documenter.css" rel="stylesheet">
+        <link href="../assets/extra.css" rel="stylesheet">
+
+        <script src="../js/jquery-1.10.2.min.js" defer></script>
+        <script src="../js/bootstrap.min.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="..">CovidSEIR.jl</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="navitem">
+                                <a href=".." class="nav-link">Package Docs</a>
+                            </li>
+                            <li class="dropdown active">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">SEIR Model and Results <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../covid/" class="dropdown-item">Model</a>
+</li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Results</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../canada/" class="dropdown-item">Canada</a>
+</li>
+            
+<li>
+    <a href="../italy/" class="dropdown-item">Italy</a>
+</li>
+            
+<li>
+    <a href="../korea/" class="dropdown-item">South Korea</a>
+</li>
+            
+<li>
+    <a href="./" class="dropdown-item active">China</a>
+</li>
+    </ul>
+  </li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">About <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../license/" class="dropdown-item">License</a>
+</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../korea/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../license/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="https://github.com/schrimpf/CovidSEIR.jl/edit/master/docs/china.md" class="nav-link"><i class="fa fa-github"></i> Edit on GitHub</a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-light navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-level="1"><a href="#china" class="nav-link">China</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-level="2"><a href="#estimates" class="nav-link">Estimates</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#fit" class="nav-link">Fit</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#implications" class="nav-link">Implications</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<p><a href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a></p>
+<p>This work is licensed under a <a href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike
+4.0 International
+License</a></p>
+<pre><code class="julia">using CovidSEIR,  Plots, DataFrames, JLD2, StatsPlots
+</code></pre>
+
+<pre><code>Error: importing CovidSEIR into Main conflicts with an existing identifier
+</code></pre>
+<pre><code class="julia">Plots.pyplot()
+jmddir = normpath(joinpath(dirname(Base.find_package(&quot;CovidSEIR&quot;)),&quot;..&quot;,&quot;docs&quot;,&quot;jmd&quot;))
+covdf = covidjhudata()
+describe(covdf)
+</code></pre>
+
+<pre><code>11×8 DataFrame. Omitted printing of 2 columns
+│ Row │ variable  │ mean      │ min         │ median    │ max        │ nuni
+que │
+│     │ Symbol    │ Union…    │ Any         │ Union…    │ Any        │ Unio
+n…  │
+├─────┼───────────┼───────────┼─────────────┼───────────┼────────────┼─────
+────┤
+│ 1   │ Date      │           │ 2020-01-22  │           │ 2020-03-29 │ 68  
+    │
+│ 2   │ confirmed │ 521.072   │ 0           │ 0.0       │ 140886     │     
+    │
+│ 3   │ Province  │           │ Alberta     │           │ Zhejiang   │ 79  
+    │
+│ 4   │ Country   │           │ Afghanistan │           │ Zimbabwe   │ 177 
+    │
+│ 5   │ Lat       │ 22.0528   │ -41.4545    │ 23.8298   │ 71.7069    │     
+    │
+│ 6   │ Long      │ 23.2675   │ -135.0      │ 20.9394   │ 178.065    │     
+    │
+│ 7   │ deaths    │ 20.5945   │ 0           │ 0.0       │ 10779      │     
+    │
+│ 8   │ recovered │ 168.91    │ 0           │ 0.0       │ 62570      │     
+    │
+│ 9   │ iso2c     │           │ AD          │           │ ZW         │ 170 
+    │
+│ 10  │ cpop      │ 2.27709e8 │ 33785.0     │ 2.49924e7 │ 1.39273e9  │     
+    │
+│ 11  │ ppop      │ 2.74801e7 │ 41078       │ 1.557e7   │ 111690000  │     
+    │
+</code></pre>
+<h1 id="china">China<a class="headerlink" href="#china" title="Permanent link">&para;</a></h1>
+<pre><code class="julia">using Dates
+dayt0 = Dates.Date(&quot;2020-01-22&quot;) - Dates.Day(45)
+china = CountryData(covdf, &quot;China&quot;, 45)
+</code></pre>
+
+<pre><code>CountryData{Float64,Int64}(1.39273e9, [45, 46, 47, 48, 49, 50, 51, 52, 53, 
+54  …  103, 104, 105, 106, 107, 108, 109, 110, 111, 112], [17.0, 18.0, 26.0
+, 42.0, 56.0, 82.0, 131.0, 133.0, 171.0, 213.0  …  3253.0, 3259.0, 3274.0, 
+3274.0, 3281.0, 3285.0, 3291.0, 3296.0, 3299.0, 3304.0], [28.0, 30.0, 36.0,
+ 39.0, 49.0, 58.0, 101.0, 120.0, 135.0, 214.0  …  71266.0, 71857.0, 72362.0
+, 72814.0, 73280.0, 73773.0, 74181.0, 74720.0, 75100.0, 75582.0], [503.0, 5
+95.0, 858.0, 1325.0, 1970.0, 2737.0, 5277.0, 5834.0, 7835.0, 9375.0  …  673
+1.0, 6189.0, 5799.0, 5410.0, 5030.0, 4603.0, 4310.0, 3881.0, 3600.0, 3236.0
+])
+</code></pre>
+<pre><code class="julia">using Turing
+mdl = countrymodel(china)
+cc = Turing.psample(mdl, NUTS(0.65), 2000, 4)
+import JLD2
+JLD2.@save &quot;$jmddir/china_$(Dates.today()).jld2&quot; cc
+</code></pre>
+
+<pre><code class="julia">JLD2.@load &quot;$jmddir/china_2020-03-29.jld2&quot; cc;
+</code></pre>
+
+<h2 id="estimates">Estimates<a class="headerlink" href="#estimates" title="Permanent link">&para;</a></h2>
+<pre><code class="julia">plot(cc)
+</code></pre>
+
+<p><img alt="" src="../figures/china_5_1.png" /></p>
+<pre><code class="julia">describe(cc)
+</code></pre>
+
+<pre><code>2-element Array{ChainDataFrame,1}
+
+Summary Statistics
+  parameters        mean        std  naive_se     mcse        ess   r_hat
+  ──────────  ──────────  ─────────  ────────  ───────  ─────────  ──────
+           a      0.4012     0.1054    0.0017   0.0032  1458.7298  1.0003
+         pE0      0.0000     0.0000    0.0000   0.0000   785.1973  1.0022
+        p[1]      0.0000     0.0000    0.0000   0.0000   586.3224  1.0066
+        p[2]      0.8409     0.1131    0.0018   0.0031  1328.6271  1.0012
+        sigC  16476.3544  1915.5582   30.2876  55.3010  1136.5533  1.0029
+        sigD     45.9304     9.4465    0.1494   0.3130   808.6178  1.0038
+       sigRc   5351.2466   707.6024   11.1882  22.4649   778.8051  1.0031
+        β[1]      0.5598     0.0593    0.0009   0.0015  1557.5895  1.0010
+        β[2]      1.0103     0.7097    0.0112   0.0131  2597.7358  1.0012
+        γ[1]      0.0816     0.0086    0.0001   0.0003   707.2292  1.0056
+        γ[2]      0.2339     0.1522    0.0024   0.0049  1030.9134  1.0019
+           τ      0.0000     0.0000    0.0000   0.0000   792.4414  1.0040
+
+Quantiles
+  parameters        2.5%       25.0%       50.0%       75.0%       97.5%
+  ──────────  ──────────  ──────────  ──────────  ──────────  ──────────
+           a      0.2653      0.3277      0.3768      0.4474      0.6787
+         pE0      0.0000      0.0000      0.0000      0.0000      0.0001
+        p[1]      0.0000      0.0000      0.0000      0.0000      0.0000
+        p[2]      0.5979      0.7664      0.8606      0.9354      0.9946
+        sigC  12965.2724  15138.9180  16418.0222  17710.5078  20428.2213
+        sigD     32.6592     39.0364     44.0738     51.1849     69.3655
+       sigRc   4064.7839   4870.3899   5329.8974   5794.5089   6751.0947
+        β[1]      0.4614      0.5179      0.5551      0.5936      0.6923
+        β[2]      0.0536      0.4429      0.8922      1.4450      2.6301
+        γ[1]      0.0645      0.0756      0.0820      0.0876      0.0975
+        γ[2]      0.0159      0.1166      0.2125      0.3268      0.5756
+           τ      0.0000      0.0000      0.0000      0.0000      0.0000
+</code></pre>
+<h2 id="fit">Fit<a class="headerlink" href="#fit" title="Permanent link">&para;</a></h2>
+<pre><code class="julia">sdf = simtrajectories(cc, china, 1:150)
+f = plotvars(sdf, china, dayt0=dayt0)
+plot(f.fit, xlim=nothing, ylim=nothing)
+</code></pre>
+
+<p><img alt="" src="../figures/china_7_1.png" /></p>
+<h2 id="implications">Implications<a class="headerlink" href="#implications" title="Permanent link">&para;</a></h2>
+<pre><code class="julia">for fig in f.trajectories
+  display(plot(fig, xlim=nothing))
+end
+</code></pre>
+
+<p><img alt="" src="../figures/china_8_1.png" /> <img alt="" src="../figures/china_8_2.png" />
+<img alt="" src="../figures/china_8_3.png" /> <img alt="" src="../figures/china_8_4.png" />
+<img alt="" src="../figures/china_8_5.png" /> <img alt="" src="../figures/china_8_6.png" />
+<img alt="" src="../figures/china_8_7.png" /> <img alt="" src="../figures/china_8_8.png" />
+<img alt="" src="../figures/china_8_9.png" /> <img alt="" src="../figures/china_8_10.png" />
+<img alt="" src="../figures/china_8_11.png" /> <img alt="" src="../figures/china_8_12.png" />
+<img alt="" src="../figures/china_8_13.png" /> <img alt="" src="../figures/china_8_14.png" /></p></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+                <p>Paul Schrimpf</p>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = "..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../js/base.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML" defer></script>
+        <script src="../assets/mathjaxhelper.js" defer></script>
+        <script src="../search/main.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    From here you can search these documents. Enter
+                    your search terms below.
+                </p>
+                <form>
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

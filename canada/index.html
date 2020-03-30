@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <meta name="author" content="Paul Schrimpf">
+        
+        <link rel="shortcut icon" href="../img/favicon.ico">
+        <title>Canada - CovidSEIR.jl</title>
+        <link href="../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/atelier-forest-light.min.css">
+        <link href="../assets/Documenter.css" rel="stylesheet">
+        <link href="../assets/extra.css" rel="stylesheet">
+
+        <script src="../js/jquery-1.10.2.min.js" defer></script>
+        <script src="../js/bootstrap.min.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="..">CovidSEIR.jl</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="navitem">
+                                <a href=".." class="nav-link">Package Docs</a>
+                            </li>
+                            <li class="dropdown active">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">SEIR Model and Results <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../covid/" class="dropdown-item">Model</a>
+</li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Results</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="./" class="dropdown-item active">Canada</a>
+</li>
+            
+<li>
+    <a href="../italy/" class="dropdown-item">Italy</a>
+</li>
+            
+<li>
+    <a href="../korea/" class="dropdown-item">South Korea</a>
+</li>
+            
+<li>
+    <a href="../china/" class="dropdown-item">China</a>
+</li>
+    </ul>
+  </li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">About <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../license/" class="dropdown-item">License</a>
+</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../covid/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../italy/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="https://github.com/schrimpf/CovidSEIR.jl/edit/master/docs/canada.md" class="nav-link"><i class="fa fa-github"></i> Edit on GitHub</a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-light navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-level="1"><a href="#canada" class="nav-link">Canada</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-level="2"><a href="#estimates" class="nav-link">Estimates</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#fit" class="nav-link">Fit</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#implications" class="nav-link">Implications</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<p><a href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a></p>
+<p>This work is licensed under a <a href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike
+4.0 International
+License</a></p>
+<pre><code class="julia">using CovidSEIR,  Plots, DataFrames, JLD2, StatsPlots
+Plots.pyplot()
+jmddir = normpath(joinpath(dirname(Base.find_package(&quot;CovidSEIR&quot;)),&quot;..&quot;,&quot;docs&quot;,&quot;jmd&quot;))
+covdf = covidjhudata()
+describe(covdf)
+</code></pre>
+
+<pre><code>11×8 DataFrame. Omitted printing of 2 columns
+│ Row │ variable  │ mean      │ min         │ median    │ max        │ nuni
+que │
+│     │ Symbol    │ Union…    │ Any         │ Union…    │ Any        │ Unio
+n…  │
+├─────┼───────────┼───────────┼─────────────┼───────────┼────────────┼─────
+────┤
+│ 1   │ Date      │           │ 2020-01-22  │           │ 2020-03-28 │ 67  
+    │
+│ 2   │ confirmed │ 486.367   │ 0           │ 0.0       │ 121478     │     
+    │
+│ 3   │ Province  │           │ Alberta     │           │ Zhejiang   │ 79  
+    │
+│ 4   │ Country   │           │ Afghanistan │           │ Zimbabwe   │ 177 
+    │
+│ 5   │ Lat       │ 22.0528   │ -41.4545    │ 23.8298   │ 71.7069    │     
+    │
+│ 6   │ Long      │ 23.2675   │ -135.0      │ 20.9394   │ 178.065    │     
+    │
+│ 7   │ deaths    │ 18.9005   │ 0           │ 0.0       │ 10023      │     
+    │
+│ 8   │ recovered │ 162.121   │ 0           │ 0.0       │ 62098      │     
+    │
+│ 9   │ iso2c     │           │ AD          │           │ ZW         │ 170 
+    │
+│ 10  │ cpop      │ 2.27709e8 │ 33785.0     │ 2.49924e7 │ 1.39273e9  │     
+    │
+│ 11  │ ppop      │ 2.74801e7 │ 41078       │ 1.557e7   │ 111690000  │     
+    │
+</code></pre>
+<h1 id="canada">Canada<a class="headerlink" href="#canada" title="Permanent link">&para;</a></h1>
+<p>We estimate the model with the following code. It takes about an hour.</p>
+<pre><code class="julia">canada = CountryData(covdf, &quot;Canada&quot;);
+</code></pre>
+
+<pre><code class="julia">using Turing
+canmod = countrymodel(canada)
+cc = Turing.psample(canmod, NUTS(0.65), 2000, 4)
+import JLD2
+JLD2.@save &quot;$jmddir/canada_$(Dates.today()).jld2&quot; cc
+</code></pre>
+
+<pre><code class="julia">JLD2.@load &quot;$jmddir/canada_2020-03-28.jld2&quot; cc;
+</code></pre>
+
+<h2 id="estimates">Estimates<a class="headerlink" href="#estimates" title="Permanent link">&para;</a></h2>
+<pre><code class="julia">plot(cc)
+</code></pre>
+
+<p><img alt="" src="../figures/canada_5_1.png" /></p>
+<p>We can see that there might be convergence issues. There are large
+differences between the four chains for some parameters.</p>
+<pre><code class="julia">describe(cc)
+</code></pre>
+
+<pre><code>2-element Array{MCMCChains.ChainDataFrame,1}
+
+Summary Statistics
+  parameters     mean     std  naive_se    mcse       ess   r_hat
+  ──────────  ───────  ──────  ────────  ──────  ────────  ──────
+           a   0.3088  0.2412    0.0038  0.0231   89.6474  1.0359
+         pE0   0.0000  0.0000    0.0000  0.0000   70.5632  1.0856
+        p[1]   0.1042  0.1802    0.0028  0.0271   16.0643  2.4066
+        p[2]   0.1835  0.1769    0.0028  0.0205   21.5262  1.2919
+        sigC  55.9872  5.3305    0.0843  0.4254  151.1913  1.0043
+        sigD   1.2701  0.1226    0.0019  0.0091  156.7255  1.0465
+       sigRc  17.4322  1.4134    0.0223  0.0887  303.4507  1.0111
+        β[1]   0.5243  0.3414    0.0054  0.0402   26.0625  1.1952
+        β[2]   0.9836  0.6433    0.0102  0.0441  170.9821  1.0298
+        γ[1]   0.0504  0.1739    0.0027  0.0222   19.6993  1.3554
+        γ[2]   0.2633  0.2855    0.0045  0.0318   26.4008  1.2485
+           τ   1.4733  1.2375    0.0196  0.1117   60.5718  1.0828
+
+Quantiles
+  parameters     2.5%    25.0%    50.0%    75.0%    97.5%
+  ──────────  ───────  ───────  ───────  ───────  ───────
+           a   0.0750   0.1199   0.2164   0.4248   0.9082
+         pE0   0.0000   0.0000   0.0000   0.0000   0.0000
+        p[1]   0.0021   0.0057   0.0098   0.1192   0.6038
+        p[2]   0.0024   0.0044   0.1515   0.2911   0.5979
+        sigC  46.3921  52.1740  55.7451  59.4129  66.9490
+        sigD   1.0686   1.1820   1.2583   1.3417   1.5536
+       sigRc  14.9106  16.3755  17.3844  18.3851  20.2662
+        β[1]   0.0931   0.3109   0.4274   0.6564   1.4965
+        β[2]   0.0789   0.5019   0.8582   1.3500   2.4933
+        γ[1]   0.0007   0.0042   0.0072   0.0098   0.6798
+        γ[2]   0.0022   0.0124   0.1721   0.4366   0.9681
+           τ   0.0092   0.3943   1.2458   2.2669   4.2214
+</code></pre>
+<p>The parameter estimates are generally not very precise.</p>
+<h2 id="fit">Fit<a class="headerlink" href="#fit" title="Permanent link">&para;</a></h2>
+<pre><code class="julia">sdf = simtrajectories(cc, canada, 1:150)
+f = plotvars(sdf, canada)
+f.fit
+</code></pre>
+
+<p><img alt="" src="../figures/canada_7_1.png" /></p>
+<p>In this figure, solid lines are observed data, dashed lines are
+posterior means, and the shaded region is a pointwise 90% credible
+interval.</p>
+<p>Note that the last day of data used in the estimation was March 27th.
+The fit appears quite good. The fitted estimates are also remarkably
+precise. Although individual parameters are not precisely estimated, the
+combination of them that gives rise to the observed data is precisely
+estimated.</p>
+<h2 id="implications">Implications<a class="headerlink" href="#implications" title="Permanent link">&para;</a></h2>
+<p>We now look at the model’s projections for some observed and unobserved
+variables.</p>
+<pre><code class="julia">for fig in f.trajectories
+  display(fig)
+end
+</code></pre>
+
+<p><img alt="" src="../figures/canada_8_1.png" /> <img alt="" src="../figures/canada_8_2.png" />
+<img alt="" src="../figures/canada_8_3.png" /> <img alt="" src="../figures/canada_8_4.png" />
+<img alt="" src="../figures/canada_8_5.png" /> <img alt="" src="../figures/canada_8_6.png" />
+<img alt="" src="../figures/canada_8_7.png" /> <img alt="" src="../figures/canada_8_8.png" />
+<img alt="" src="../figures/canada_8_9.png" /> <img alt="" src="../figures/canada_8_10.png" />
+<img alt="" src="../figures/canada_8_11.png" /> <img alt="" src="../figures/canada_8_12.png" />
+<img alt="" src="../figures/canada_8_13.png" /> <img alt="" src="../figures/canada_8_14.png" /></p>
+<p>In general we see a similar pattern as noted above: the posteriors for
+observed variables are fairly precise. However, the posteriors for
+unobserved variables, such as the portion of undetected infections and
+the portion of mild infections, are very imprecise.</p></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+                <p>Paul Schrimpf</p>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = "..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../js/base.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML" defer></script>
+        <script src="../assets/mathjaxhelper.js" defer></script>
+        <script src="../search/main.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    From here you can search these documents. Enter
+                    your search terms below.
+                </p>
+                <form>
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

@@ -1,0 +1,73 @@
+---
+title       : "Bayesian Estimates of a SEIR model of Covid"
+subtitle    : "US"
+author      : Paul Schrimpf
+date        : `j using Dates; print(Dates.today())`
+bibliography: "covid.bib"
+link-citations: true
+options:
+      out_width : 100%
+      wrap : true
+      fig_width : 800
+      dpi : 192
+---
+
+[![](https://i.creativecommons.org/l/by-sa/4.0/88x31.png)](http://creativecommons.org/licenses/by-sa/4.0/)
+
+This work is licensed under a [Creative Commons Attribution-ShareAlike
+4.0 International
+License](http://creativecommons.org/licenses/by-sa/4.0/) 
+
+
+```julia
+using CovidSEIR,  Plots, DataFrames, JLD2, StatsPlots, Dates
+Plots.pyplot()
+jmddir = normpath(joinpath(dirname(Base.find_package("CovidSEIR")),"..","docs","jmd"))
+covdf = covidjhudata()
+describe(covdf)
+```
+
+# United States
+
+```julia
+us = CountryData(covdf, "US")
+```
+
+```julia; eval=false
+using Turing
+mdl = countrymodel(us)
+cc = Turing.psample(mdl, NUTS(0.65), 2000, 4)
+import JLD2
+JLD2.@save "$jmddir/us_$(Dates.today()).jld2" cc
+```
+```julia
+JLD2.@load "$jmddir/us_2020-03-29.jld2" cc;
+```
+
+## Estimates
+
+```julia
+plot(cc)
+```
+
+```julia
+describe(cc)
+```
+
+## Fit
+
+```julia
+sdf = simtrajectories(cc, us, 1:150)
+f = plotvars(sdf, us)
+plot(f.fit, ylim=(0, maximum(us.active)*1.3))
+```
+
+## Implications
+
+```julia
+for fig in f.trajectories
+  display(plot(fig))
+end
+```
+
+

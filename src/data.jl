@@ -5,7 +5,7 @@ Downloads most recent JHU CSSE data on covid cases, deaths, and recoveries.
 
 Returns a DataFrame
 """
-function covidjhudata()
+function covidjhudata(;redownload=false)
 
   url = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv"
   ids = Symbol.(["Province/State","Country/Region", "Lat","Long"])
@@ -52,9 +52,9 @@ function covidjhudata()
   df[df.Country.=="South Africa", :iso2c] .= "ZA"
   df[df.Country.=="Sudan", :iso2c] .= "SD"
   df[df.Country.=="Dominica", :iso2c] .= "DM"
+  df[df.Country.=="US", :iso2c] .= "US"
 
   csvfile=normpath(joinpath(dirname(Base.find_package("CovidSEIR")),"..","data","cpop.csv"))
-  redownload=false
   if (redownload || !isfile(csvfile))
     tmp = DataFrames.DataFrame(iso2c=unique(skipmissing(df.iso2c)))
     tmp.cpop = Vector{Union{Missing,Float64}}(undef, DataFrames.nrow(tmp))

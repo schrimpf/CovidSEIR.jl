@@ -1,7 +1,7 @@
 BIB = jmd/covid.bib
 PANDOC = pandoc --bibliography $(BIB) -f markdown -t markdown_mmd-citations --metadata link-citations=true 
 
-WEAVE = julia --project=@. jmd/makeweave.jl 
+WEAVE = julia --project=@. makeweave.jl 
 vpath %.jmd jmd
 
 

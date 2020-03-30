@@ -1,0 +1,79 @@
+---
+title       : "Bayesian Estimates of a SEIR model of Covid"
+subtitle    : "Italy"
+author      : Paul Schrimpf
+date        : `j using Dates; print(Dates.today())`
+bibliography: "covid.bib"
+link-citations: true
+options:
+      out_width : 100%
+      wrap : true
+      fig_width : 800
+      dpi : 192
+---
+
+[![](https://i.creativecommons.org/l/by-sa/4.0/88x31.png)](http://creativecommons.org/licenses/by-sa/4.0/)
+
+This work is licensed under a [Creative Commons Attribution-ShareAlike
+4.0 International
+License](http://creativecommons.org/licenses/by-sa/4.0/) 
+
+
+```julia
+using CovidSEIR,  Plots, DataFrames, JLD2, StatsPlots
+Plots.pyplot()
+jmddir = normpath(joinpath(dirname(Base.find_package("CovidSEIR")),"..","docs","jmd"))
+covdf = covidjhudata()
+describe(covdf)
+```
+
+# Italy
+
+```julia
+italy = CountryData(covdf, "Italy");
+```
+
+```julia; eval=false
+itmod = countrymodel(italy)
+ci = Turing.psample(itmod, NUTS(0.65), 2000, 4)
+import JLD2
+JLD2.@save "$jmddir/italy_$(Dates.today()).jld2" ci
+```
+```julia
+JLD2.@load "$jmddir/italy_2020-03-28.jld2" ci;
+```
+
+## Estimates
+```julia
+plot(ci)
+```
+
+```julia
+describe(ci)
+```
+
+Compared to Canada, Italy has a very low estimate of
+$\tau$. Apparently a high number of undetected cases helps to explain
+the rapid growth in confirmed cases in Italy.
+
+## Fit
+
+```julia
+sdf = simtrajectories(ci, italy, 1:150)
+f = plotvars(sdf, italy)
+f.fit
+```
+
+As with Canada, the fit is very good, and the posterior distribution
+of observables is very precise.
+
+## Implications
+
+```julia
+for fig in f.trajectories
+  display(fig)
+end
+```
+
+The posterior estimates imply that Italy has about 10 times as many
+undetected cases as detected.

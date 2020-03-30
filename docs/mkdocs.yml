@@ -35,7 +35,14 @@ docs_dir: 'build'
 
 nav:
   - Package Docs: index.md
-  - SEIR Model and Results: covid.md
+  - SEIR Model and Results:
+    - Model: covid.md
+    - Results:
+      - Canada: canada.md
+      - Italy: italy.md
+      - South Korea: korea.md
+      - China: china.md
+      - United States: us.md
   - About:
     - License: license.md
     

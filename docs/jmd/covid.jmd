@@ -84,8 +84,8 @@ These variables evolve according to the following system of differential equatio
 
 $$
 \begin{align*}
-\dot{S} & = -S \left( \sum_i \beta_i (I_i + C_i) right) \\
-\dot{E} & = S \left( \sum_i \beta_i (I_i + C_i) right) - a E  \\
+\dot{S} & = -S \left( \sum_i \beta_i (I_i + C_i) \right) \\
+\dot{E} & = S \left( \sum_i \beta_i (I_i + C_i) \right) - a E  \\
 \dot{I_1} & = a E - \gamma_1 I_1 - p_1 I_1 - \tau C_1 \\
 \dot{I_2} & = 0 \\
 \dot{C_1}  & =  \tau I - \gamma_1 C_1 - p_1 C_1 \\
@@ -201,128 +201,13 @@ We estimate the model by MCMC. Specifically, we use the
 Hamiltonian Monte Carlo. In the results below we use 4 chains with
 1000 warmup iterations, and 1000 iterations for the results.
 
-## Canada
+# Results
 
-We estimate the model with the following code. It takes about an hour.
-
-```julia
-canada = CountryData(covdf, "Canada");
-```
-
-```julia; eval=false
-using Turing
-canmod = countrymodel(canada)
-cc = Turing.psample(canmod, NUTS(0.65), 2000, 4)
-import JLD2
-JLD2.@save "$jmddir/canada_$(Dates.today()).jld2" cc
-```
-
-```julia
-JLD2.@load "$jmddir/canada_2020-03-28.jld2" cc;
-```
-
-### Estimates
-
-```julia
-plot(cc)
-```
-
-We can see that there might be convergence issues. There are large
-differences between the four chains for some parameters.
-
-```julia
-describe(cc)
-```
-
-The parameter estimates are generally not very precise. 
-
-
-### Fit
-
-```julia
-sdf = simtrajectories(cc, canada, 1:150)
-f = plotvars(sdf, canada)
-f.fit
-```
-
-In this figure, solid lines are observed data, dashed lines are
-posterior means, and the shaded region is a pointwise 90\% credible
-interval. 
-
-Note that the last day of data used in the estimation was March 27th.
-The fit appears quite good. The fitted estimates are also remarkably
-precise. Although individual parameters are not precisely estimated,
-the combination of them that gives rise to the observed data is
-precisely estimated. 
-
-### Implications
-
-We now look at the model's projections for some observed and unobserved variables. 
-
-```julia
-for fig in f.trajectories
-  display(fig)
-end
-```
-
-In general we see a similar pattern as noted above: the posteriors for
-observed variables are fairly precise. However, the posteriors for
-unobserved variables, such as the portion of undetected infections and
-the portion of mild infections, are very imprecise. 
-
-
-## Italy
-
-```julia
-italy = CountryData(covdf, "Italy");
-```
-
-```julia; eval=false
-itmod = countrymodel(italy)
-ci = Turing.psample(itmod, NUTS(0.65), 2000, 4)
-import JLD2
-JLD2.@save "$jmddir/italy_$(Dates.today()).jld2" ci
-```
-```julia
-JLD2.@load "$jmddir/italy_2020-03-28.jld2" ci;
-```
-
-### Estimates
-```julia
-plot(ci)
-```
-
-```julia
-describe(ci)
-```
-
-Compared to Canada, Italy has a very low estimate of
-$\tau$. Apparently a high number of undetected cases helps to explain
-the rapid growth in confirmed cases in Italy.
-
-### Fit
-
-```julia
-sdf = simtrajectories(ci, italy, 1:150)
-f = plotvars(sdf, italy)
-f.fit
-```
-
-As with Canada, the fit is very good, and the posterior distribution
-of observables is very precise.
-
-### Implications
-
-```julia
-for fig in f.trajectories
-  display(fig)
-end
-```
-
-The posterior estimates imply that Italy has about 10 times as many
-undetected cases as detected.
-
-
+- [Canada](canada.md)
+- [Italy](italy.md)
+- [South Korea](korea.md)
+- [China](china.md)
+- [United States](us.md)
 
 # Extensions
 

@@ -162,9 +162,9 @@ begin
   for i in 1:length(time)
     t = time[i]
     #S, E, I, C, R, Rc, X = systemvars(sol[:,i])
-    dead[t] ~ Normal(sol[lu,i], sigD)
-    recovered[t] ~ Normal(sol[lu-1,i], sigRc)
-    active[t] ~ Normal(sum(sol[4:5,i]), sigC)
+    dead[i] ~ Normal(sol[lu,i], sigD)
+    recovered[i] ~ Normal(sol[lu-1,i], sigRc)
+    active[i] ~ Normal(sum(sol[4:5,i]), sigC)
   end
   return(active=active, dead=dead, recovered=recovered,E0=E0, sol=sol,
          β=β, γ=γ, τ=τ, p=p, a=a, sigD=sigD, sigRc=sigRc, sigC=sigC)

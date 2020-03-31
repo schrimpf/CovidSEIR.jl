@@ -43,3 +43,12 @@ all: site/index.html #$(nbout)
 
 deploy: site/index.html 
 	mkdocs gh-deploy
+
+
+estpref = canada china italy korea us
+estnew := $(patsubst %, %_$(shell date +'%Y-%m.%d').jld2, $(estpref))
+
+$(estnew): 
+	julia --project=@. estimate.jl $@
+
+estimate: $(estnew)

@@ -38,13 +38,13 @@ canada = CountryData(covdf, "Canada");
 ```julia; eval=false
 using Turing
 canmod = countrymodel(canada)
-cc = Turing.psample(canmod, NUTS(0.65), 2000, 4)
+cc = Turing.psample(canmod, NUTS(0.65), 10000, 4)
 import JLD2
 JLD2.@save "$jmddir/canada_$(Dates.today()).jld2" cc
 ```
 
 ```julia
-JLD2.@load "$jmddir/canada_2020-03-28.jld2" cc;
+JLD2.@load "$jmddir/canada_2020-03-30.jld2" cc;
 ```
 
 ## Estimates

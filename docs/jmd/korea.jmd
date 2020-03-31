@@ -37,12 +37,12 @@ korea = CountryData(covdf, "Korea, South")
 ```julia; eval=false
 using Turing
 mdl = countrymodel(korea)
-cc = Turing.psample(mdl, NUTS(0.65), 2000, 4)
+cc = Turing.psample(mdl, NUTS(0.65), 10000, 4)
 import JLD2
 JLD2.@save "$jmddir/korea_$(Dates.today()).jld2" cc
 ```
 ```julia
-JLD2.@load "$jmddir/korea_2020-03-29.jld2" cc;
+JLD2.@load "$jmddir/korea_2020-03-30.jld2" cc;
 ```
 ## Estimates
 

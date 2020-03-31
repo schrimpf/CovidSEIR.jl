@@ -226,7 +226,7 @@ function priorreport(priors=defaultcountrypriors(), T=100, population=1e7;
     sigC ~ priors["sigC"]
     sigRc ~ priors["sigRc"]
   end
-  pc = sample(pm(defaultcountrypriors()), NUTS(0.65), 500)
+  pc = sample(pm(priors), NUTS(0.65), 500)
   
   return(all=combofig, figs=fig, tbl=describe(pc))
 end

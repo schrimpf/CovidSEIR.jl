@@ -20,14 +20,7 @@ License](http://creativecommons.org/licenses/by-sa/4.0/)
 
 
 ```julia
-using Pkg
-#Pkg.activate(".") # If running on  vse.syzygy.ca, you might need to uncomment this command
-#try
-  using CovidSEIR
-#catch
-  #Pkg.add(PackageSpec(url="https://github.com/schrimpf/CovidSEIR.jl"))
-  #using CovidSEIR
-#end
+using CovidSEIR
 using Plots
 Plots.pyplot()
 using DataFrames, JLD2

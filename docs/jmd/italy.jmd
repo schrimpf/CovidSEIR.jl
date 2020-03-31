@@ -35,21 +35,21 @@ italy = CountryData(covdf, "Italy");
 
 ```julia; eval=false
 itmod = countrymodel(italy)
-ci = Turing.psample(itmod, NUTS(0.65), 2000, 4)
+cc = Turing.psample(itmod, NUTS(0.65), 10000, 4)
 import JLD2
-JLD2.@save "$jmddir/italy_$(Dates.today()).jld2" ci
+JLD2.@save "$jmddir/italy_$(Dates.today()).jld2" cc
 ```
 ```julia
-JLD2.@load "$jmddir/italy_2020-03-28.jld2" ci;
+JLD2.@load "$jmddir/italy_2020-03-30.jld2" cc;
 ```
 
 ## Estimates
 ```julia
-plot(ci)
+plot(cc)
 ```
 
 ```julia
-describe(ci)
+describe(cc)
 ```
 
 Compared to Canada, Italy has a very low estimate of
@@ -59,7 +59,7 @@ the rapid growth in confirmed cases in Italy.
 ## Fit
 
 ```julia
-sdf = simtrajectories(ci, italy, 1:150)
+sdf = simtrajectories(cc, italy, 1:150)
 f = plotvars(sdf, italy)
 f.fit
 ```

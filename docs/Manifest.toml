@@ -152,6 +152,12 @@ git-tree-sha1 = "c61e14bc36e38d3845854d8a100f3cf6401f753c"
 uuid = "aaaa29a8-35af-508c-8bc3-b662a17a0fe5"
 version = "0.13.5"
 
+[[CodeTracking]]
+deps = ["InteractiveUtils", "UUIDs"]
+git-tree-sha1 = "0becdab7e6fbbcb7b88d8de5b72e5bb2f28239f3"
+uuid = "da1fd8a2-8d9e-5ec2-8556-3022fb5608a2"
+version = "0.5.8"
+
 [[CodecZlib]]
 deps = ["BinaryProvider", "Libdl", "TranscodingStreams"]
 git-tree-sha1 = "05916673a2627dd91b4969ff8ba6941bc85a960e"
@@ -425,6 +431,9 @@ git-tree-sha1 = "2cd6e2e7965934f72cb80251f760228e2264bab3"
 uuid = "48062228-2e41-5def-b9a4-89aafe57970f"
 version = "0.7.0"
 
+[[FileWatching]]
+uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
+
 [[FillArrays]]
 deps = ["LinearAlgebra", "Random", "SparseArrays"]
 git-tree-sha1 = "3eb5253af6186eada40de3df524a1c10f0c6bfa2"
@@ -590,6 +599,12 @@ git-tree-sha1 = "b34d7cef7b337321e97d22242c3c2b91f476748e"
 uuid = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 version = "0.21.0"
 
+[[JuliaInterpreter]]
+deps = ["CodeTracking", "InteractiveUtils", "Random", "UUIDs"]
+git-tree-sha1 = "2eadbbde5534346cbb837c3a75b377cba477a06d"
+uuid = "aa1ae85d-cabe-5617-a682-6adf51b2e16a"
+version = "0.7.13"
+
 [[JuliaVariables]]
 deps = ["MLStyle", "NameResolution"]
 git-tree-sha1 = "8868479ff35ab98588ed0a529a9c2a4f8bda3bd6"
@@ -679,6 +694,12 @@ uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
 git-tree-sha1 = "c867b50bfc564f0beded1c566f4fc66cfd8b5418"
 uuid = "e6f89c97-d47a-5376-807f-9c37f3926c36"
 version = "0.4.0"
+
+[[LoweredCodeUtils]]
+deps = ["JuliaInterpreter"]
+git-tree-sha1 = "1c41621653250b2824b6e664ac5bd805558aeff9"
+uuid = "6f1432cf-f94c-5a45-995e-cdbf5db27b0b"
+version = "0.4.3"
 
 [[MCMCChains]]
 deps = ["AbstractMCMC", "AxisArrays", "Distributions", "Formatting", "LinearAlgebra", "Random", "RecipesBase", "Requires", "Serialization", "SpecialFunctions", "Statistics", "StatsBase"]
@@ -826,9 +847,9 @@ version = "0.3.9+0"
 
 [[OpenSSL_jll]]
 deps = ["Libdl", "Pkg"]
-git-tree-sha1 = "33661eb9d5484220b4367d067f499b30bafc9c12"
+git-tree-sha1 = "d2a6f25262d568b5a7e454cf7ff5066a79d16c7d"
 uuid = "458c3c95-2e84-50aa-8efc-19380b2a3a95"
-version = "1.1.1+1"
+version = "1.1.1+2"
 
 [[OpenSpecFun_jll]]
 deps = ["CompilerSupportLibraries_jll", "Libdl", "Pkg"]
@@ -1033,6 +1054,12 @@ deps = ["DiffResults", "DiffRules", "ForwardDiff", "FunctionWrappers", "LinearAl
 git-tree-sha1 = "5f7dafd314ff2ada3076797b1edfb71e52151cb9"
 uuid = "37e2e3b7-166d-5795-8a7a-e32c996b4267"
 version = "1.1.0"
+
+[[Revise]]
+deps = ["CodeTracking", "Distributed", "FileWatching", "JuliaInterpreter", "LibGit2", "LoweredCodeUtils", "OrderedCollections", "Pkg", "REPL", "UUIDs", "Unicode"]
+git-tree-sha1 = "6cefbc0e3b62146e564a3cf209e7370a839883da"
+uuid = "295af30f-e4ad-537b-8983-00126c2a3abe"
+version = "2.6.0"
 
 [[Rmath]]
 deps = ["Random", "Rmath_jll"]

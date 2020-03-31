@@ -149,40 +149,9 @@ License</a></p>
 <pre><code class="julia">using CovidSEIR,  Plots, DataFrames, JLD2, StatsPlots, Dates
 Plots.pyplot()
 jmddir = normpath(joinpath(dirname(Base.find_package(&quot;CovidSEIR&quot;)),&quot;..&quot;,&quot;docs&quot;,&quot;jmd&quot;))
-covdf = covidjhudata()
-describe(covdf)
+covdf = covidjhudata();
 </code></pre>
 
-<pre><code>11×8 DataFrame. Omitted printing of 2 columns
-│ Row │ variable  │ mean      │ min         │ median    │ max        │ nuni
-que │
-│     │ Symbol    │ Union…    │ Any         │ Union…    │ Any        │ Unio
-n…  │
-├─────┼───────────┼───────────┼─────────────┼───────────┼────────────┼─────
-────┤
-│ 1   │ Date      │           │ 2020-01-22  │           │ 2020-03-30 │ 69  
-    │
-│ 2   │ confirmed │ 556.139   │ 0           │ 0.0       │ 161807     │     
-    │
-│ 3   │ Province  │           │ Alberta     │           │ Zhejiang   │ 79  
-    │
-│ 4   │ Country   │           │ Afghanistan │           │ Zimbabwe   │ 178 
-    │
-│ 5   │ Lat       │ 21.8808   │ -41.4545    │ 23.7649   │ 71.7069    │     
-    │
-│ 6   │ Long      │ 23.273    │ -135.0      │ 20.9727   │ 178.065    │     
-    │
-│ 7   │ deaths    │ 22.3605   │ 0           │ 0.0       │ 11591      │     
-    │
-│ 8   │ recovered │ 175.706   │ 0           │ 0.0       │ 62889      │     
-    │
-│ 9   │ iso2c     │           │ AD          │           │ ZW         │ 172 
-    │
-│ 10  │ cpop      │ 2.2813e8  │ 33785.0     │ 2.49924e7 │ 1.39273e9  │     
-    │
-│ 11  │ ppop      │ 2.74801e7 │ 41078       │ 1.557e7   │ 111690000  │     
-    │
-</code></pre>
 <h1 id="united-states">United States<a class="headerlink" href="#united-states" title="Permanent link">&para;</a></h1>
 <pre><code class="julia">us = CountryData(covdf, &quot;US&quot;)
 </code></pre>

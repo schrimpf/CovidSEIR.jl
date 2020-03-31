@@ -23,16 +23,15 @@ License](http://creativecommons.org/licenses/by-sa/4.0/)
 using CovidSEIR,  Plots, DataFrames, JLD2, StatsPlots
 Plots.pyplot()
 jmddir = normpath(joinpath(dirname(Base.find_package("CovidSEIR")),"..","docs","jmd"))
-covdf = covidjhudata()
-describe(covdf)
+covdf = covidjhudata();
 ```
 
 # China
 
 ```julia
 using Dates
-dayt0 = Dates.Date("2020-01-22") - Dates.Day(30)
-china = CountryData(covdf, "China", 30)
+dayt0 = Dates.Date("2020-01-22") - Dates.Day(1)
+china = CountryData(covdf, "China", 1)
 ```
 
 ```julia; eval=false

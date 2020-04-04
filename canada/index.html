@@ -158,13 +158,13 @@ covdf = covidjhudata();
 </code></pre>
 
 <pre><code class="julia">using Turing
-canmod = countrymodel(canada)
-cc = Turing.psample(canmod, NUTS(0.65), 10000, 4)
+canmod = CovidSEIR.TimeVarying.countrymodel(canada)
+cc = Turing.psample(canmod, NUTS(0.65), 5000, 4)
 import JLD2
 JLD2.@save &quot;$jmddir/canada_$(Dates.today()).jld2&quot; cc
 </code></pre>
 
-<pre><code class="julia">JLD2.@load &quot;$jmddir/canada_2020-03-30.jld2&quot; cc;
+<pre><code class="julia">JLD2.@load &quot;$jmddir/canada_tv_2020-04-03.jld2&quot; cc dayt0;
 </code></pre>
 
 <h2 id="estimates">Estimates<a class="headerlink" href="#estimates" title="Permanent link">&para;</a></h2>
@@ -180,40 +180,46 @@ differences between the four chains for some parameters.</p>
 <pre><code>2-element Array{ChainDataFrame,1}
 
 Summary Statistics
-  parameters     mean      std  naive_se    mcse       ess   r_hat
-  ──────────  ───────  ───────  ────────  ──────  ────────  ──────
-           a   0.3647   0.2798    0.0015  0.0105  217.3844  1.1815
-         pE0   0.0000   0.0000    0.0000  0.0000  217.2186  1.1875
-        p[1]   0.1321   0.2057    0.0011  0.0097  144.5783  1.4231
-        p[2]   0.1856   0.2392    0.0013  0.0118  144.5783  1.6944
-        sigC  94.3104  23.1642    0.1221  1.1524  144.5783  2.6336
-        sigD   1.6160   0.1536    0.0008  0.0044  465.4527  1.0847
-       sigRc  30.0351   3.1658    0.0167  0.1118  199.9868  1.2392
-        β[1]   0.4606   0.2904    0.0015  0.0084  635.8445  1.0200
-        β[2]   0.8386   0.6542    0.0034  0.0210  424.9685  1.0281
-        γ[1]   0.0740   0.1947    0.0010  0.0077  193.4002  1.0954
-        γ[2]   0.1691   0.1934    0.0010  0.0078  149.0449  1.2337
-           τ   1.2070   1.2796    0.0067  0.0419  241.8606  1.1243
+  parameters      mean      std  naive_se    mcse       ess   r_hat
+  ──────────  ────────  ───────  ────────  ──────  ────────  ──────
+           a    0.3663   0.2493    0.0020  0.0162  109.8516  1.0508
+         pE0    0.0000   0.0000    0.0000  0.0000   69.0298  1.1447
+        p[1]    0.2249   0.2090    0.0017  0.0152   68.9411  1.3644
+        p[2]    0.0087   0.0138    0.0001  0.0011   64.2570  1.7916
+        sigC   87.8113   8.0934    0.0640  0.4845  137.3117  1.0642
+        sigD    2.9818   0.2639    0.0021  0.0146  123.8674  1.0790
+       sigRc  120.5234  11.2212    0.0887  0.6369  181.6979  1.0479
+        β[1]    0.6730   0.5646    0.0045  0.0374   85.0754  1.0638
+        β[2]    0.7252   0.5969    0.0047  0.0421   72.8147  1.1185
+        β[3]    0.8204   0.5753    0.0045  0.0354  129.0891  1.0235
+        γ[1]    0.3462   0.3724    0.0029  0.0264   64.2570  1.4844
+        γ[2]    0.0697   0.0933    0.0007  0.0072   64.2570  1.8599
+        ρ[1]    0.7800   0.1430    0.0011  0.0092   94.7969  1.0980
+        ρ[2]   62.6193   0.8948    0.0071  0.0586   82.1667  1.2138
+           τ    0.6859   1.1848    0.0094  0.0891   64.2570  2.3084
 
 Quantiles
-  parameters     2.5%    25.0%     50.0%     75.0%     97.5%
-  ──────────  ───────  ───────  ────────  ────────  ────────
-           a   0.0749   0.1198    0.2534    0.5913    0.9524
-         pE0   0.0000   0.0000    0.0000    0.0000    0.0000
-        p[1]   0.0000   0.0044    0.0135    0.2082    0.6994
-        p[2]   0.0022   0.0032    0.0622    0.2960    0.8015
-        sigC  35.4464  93.2902  100.5024  107.1034  121.1550
-        sigD   1.3305   1.5134    1.6095    1.7108    1.9398
-       sigRc  23.4389  28.0750   30.0931   32.1007   36.1762
-        β[1]   0.0350   0.2803    0.4214    0.5680    1.2424
-        β[2]   0.0139   0.3437    0.6846    1.1962    2.4596
-        γ[1]   0.0013   0.0084    0.0118    0.0174    0.7492
-        γ[2]   0.0013   0.0111    0.0905    0.2824    0.6573
-           τ   0.0000   0.0609    0.8307    1.9548    4.3767
+  parameters      2.5%     25.0%     50.0%     75.0%     97.5%
+  ──────────  ────────  ────────  ────────  ────────  ────────
+           a    0.0761    0.1626    0.2850    0.5259    0.9303
+         pE0    0.0000    0.0000    0.0000    0.0000    0.0000
+        p[1]    0.0159    0.0487    0.1410    0.3693    0.7103
+        p[2]    0.0023    0.0024    0.0024    0.0036    0.0537
+        sigC   73.0827   82.2443   87.4223   92.8061  105.5131
+        sigD    2.4923    2.8060    2.9732    3.1460    3.5283
+       sigRc  100.7446  112.6183  119.6341  127.6296  144.6780
+        β[1]    0.0082    0.2626    0.5366    0.9317    2.1050
+        β[2]    0.1011    0.2765    0.5101    1.0400    2.2667
+        β[3]    0.0448    0.3767    0.7180    1.1543    2.1747
+        γ[1]    0.0012    0.0093    0.2504    0.5756    1.2408
+        γ[2]    0.0207    0.0242    0.0260    0.0369    0.3570
+        ρ[1]    0.4902    0.6719    0.7961    0.9020    0.9848
+        ρ[2]   60.8948   61.9923   62.6388   63.2614   64.2878
+           τ    0.0001    0.0007    0.0065    0.9963    3.9571
 </code></pre>
 <p>The parameter estimates are generally not very precise.</p>
 <h2 id="fit">Fit<a class="headerlink" href="#fit" title="Permanent link">&para;</a></h2>
-<pre><code class="julia">sdf = simtrajectories(cc, canada, 1:150)
+<pre><code class="julia">sdf = simtrajectories(cc, canada, 1:200)
 f = plotvars(sdf, canada)
 f.fit
 </code></pre>
@@ -222,11 +228,6 @@ f.fit
 <p>In this figure, solid lines are observed data, dashed lines are
 posterior means, and the shaded region is a pointwise 90% credible
 interval.</p>
-<p>Note that the last day of data used in the estimation was March 27th.
-The fit appears quite good. The fitted estimates are also remarkably
-precise. Although individual parameters are not precisely estimated, the
-combination of them that gives rise to the observed data is precisely
-estimated.</p>
 <h2 id="implications">Implications<a class="headerlink" href="#implications" title="Permanent link">&para;</a></h2>
 <p>We now look at the model’s projections for some observed and unobserved
 variables.</p>

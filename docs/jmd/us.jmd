@@ -34,13 +34,13 @@ us = CountryData(covdf, "US")
 
 ```julia; eval=false
 using Turing
-mdl = countrymodel(us)
-cc = Turing.psample(mdl, NUTS(0.65), 10000, 4)
+mdl = CovidSEIR.TimeVarying.countrymodel(us)
+cc = Turing.psample(mdl, NUTS(0.65), 5000, 4)
 import JLD2
-JLD2.@save "$jmddir/us_$(Dates.today()).jld2" cc
+JLD2.@save "$jmddir/us_tv_$(Dates.today()).jld2" cc
 ```
 ```julia
-JLD2.@load "$jmddir/us_2020-03-30.jld2" cc;
+JLD2.@load "$jmddir/us_tv_2020-04-03.jld2" cc;
 ```
 
 ## Estimates
@@ -56,7 +56,7 @@ describe(cc)
 ## Fit
 
 ```julia
-sdf = simtrajectories(cc, us, 1:150)
+sdf = simtrajectories(cc, us, 1:200)
 f = plotvars(sdf, us)
 plot(f.fit, ylim=(0, maximum(us.active)*1.3))
 ```

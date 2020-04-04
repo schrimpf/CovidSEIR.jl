@@ -23,13 +23,13 @@ doc: $(docout)
 
 
 $(jmdmd) : md/%.md : %.jmd #makeweave.jl 
-	$(WEAVE) $< $@  weave
+	$(WEAVE) $? weave
 
 $(mdout) : build/%.md : md/%.md
 	$(PANDOC) $< -o $@
 
 $(nbout) : build/%.ipynb : %.jmd 
-	$(WEAVE) $< $@  notebook
+	$(WEAVE) $^  notebook
 
 $(docout) : build/%.md :  src/%.md
 	julia --project=@. -e "using Documenter, CovidSEIR, DocumenterMarkdown; makedocs( modules=[CovidSEIR],  format=Markdown(), clean=false,  pages=[  \"Home\" => \"index.md\" ], repo=\"https://github.com/schrimpf/CovidSEIR.jl/blob/{commit}{path}#L{line}\",  sitename=\"CovidSEIR.jl\",  authors=\"Paul Schrimpf <paul.schrimpf@gmail.com>\")"
@@ -46,7 +46,7 @@ deploy: site/index.html
 
 
 estpref = canada china italy korea us
-estnew := $(patsubst %, %_$(shell date +'%Y-%m.%d').jld2, $(estpref))
+estnew := $(patsubst %, %_tv_$(shell date +'%Y-%m.%d').jld2, $(estpref))
 
 $(estnew): 
 	julia --project=@. estimate.jl $@

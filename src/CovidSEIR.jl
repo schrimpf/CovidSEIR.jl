@@ -12,7 +12,9 @@ using Plots, StatsPlots
 
 include("data.jl")
 include("model.jl")
-
+include("timevarying.jl")
+include("leastsquares.jl")
+       
 export covidjhudata,
   CountryData,
   countrymodel,

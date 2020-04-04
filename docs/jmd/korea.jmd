@@ -35,13 +35,13 @@ korea = CountryData(covdf, "Korea, South")
 
 ```julia; eval=false
 using Turing
-mdl = countrymodel(korea)
-cc = Turing.psample(mdl, NUTS(0.65), 10000, 4)
+mdl = CovidSEIR.TimeVarying.countrymodel(korea)
+cc = Turing.psample(mdl, NUTS(0.65), 5000, 4)
 import JLD2
-JLD2.@save "$jmddir/korea_$(Dates.today()).jld2" cc
+JLD2.@save "$jmddir/korea_tv_$(Dates.today()).jld2" cc
 ```
 ```julia
-JLD2.@load "$jmddir/korea_2020-03-30.jld2" cc;
+JLD2.@load "$jmddir/korea_tv_2020-04-03.jld2" cc dayt0;
 ```
 ## Estimates
 
@@ -57,7 +57,7 @@ describe(cc)
 
 ```julia
 sdf = simtrajectories(cc, korea, 1:150)
-f = plotvars(sdf, korea)
+f = plotvars(sdf, korea, dayt0=dayt0)
 plot!(f.fit, xlim=nothing)
 ```
 

@@ -77,8 +77,8 @@ These variables evolve according to the following system of differential equatio
 
 $$
 \begin{align*}
-\dot{S} & = -S \left( \sum_i \beta_i (I_i + C_i) \right) \\
-\dot{E} & = S \left( \sum_i \beta_i (I_i + C_i) \right) - a E  \\
+\dot{S} & = -S \left(  R(t)(\beta_1C_1 + (\beta_1 + \beta_3)I_1) + C_2 \beta_2 \right)/N \\
+\dot{E} & = S \left(  R(t)(\beta_1C_1 + (\beta_1 + \beta_3)I_1) + C_2 \beta_2 \right)/N - a E  \\
 \dot{I_1} & = a E - \gamma_1 I_1 - p_1 I_1 - \tau C_1 \\
 \dot{I_2} & = 0 \\
 \dot{C_1}  & =  \tau I - \gamma_1 C_1 - p_1 C_1 \\
@@ -91,7 +91,9 @@ $$
 
 Where the parameters are :
 
-* $\beta_i$ rate at which infected individuals in class $i$ contact susceptibles and infect them
+* $\beta_1$, $\beta_2$ baseline rate at which confirmed infected individuals in class $i$ contact susceptibles and infect them 
+* $\beta_1+\beta_3$ baseline rate at which undetected infected individuals infect others
+* $R(t)$ reduction in infection rate due to isolation, quarantine, and/or lockdown
 * $a$ rate of progression from the exposed to infected class
 * $\gamma_i$ rate at which infected individuals in class $i$ recover from disease and become immune
 * $p_1$ rate at which infected individuals in class $i$ progress to class $i+1$
@@ -126,14 +128,22 @@ c_t - d_t - r_t \sim & N(C_1(t) + C_2(t), \sigma_C^2)
 \end{align*}
 $$
 
+We parameterize the reduction in infection rates from public policy as 
+
+$$
+R(t) = 1- \frac{\rho_1}{1+\exp(\rho_2 -t)}
+$$
+
+This implies that infection rates drop by roughly 100$\rho_1$ percent
+in the week centered on $t=\rho_2$.
+
 ## Model Limitations
 
-An important limitation is that the model assumes all parameters are
-constant over time. This is almost surely incorrect. Most countries
-have implemented quarantine and distancing policies to attempt to
-reduce $\beta$. Efforts have also been made to increase
-$\tau$. Innovations in treatment and crowding of the medical system
-likely lead to variation in $\gamma$ and $p$. 
+An important limitation is that the model assumes all other parameters
+are constant over time. Although we allow changes in the infection
+rate, efforts have also been made to increase $\tau$. Innovations in
+treatment and crowding of the medical system likely lead to variation
+in $\gamma$ and $p$.
     
 # Single Country Estimates
 
@@ -156,13 +166,20 @@ defaultcountrypriors() = Dict(
   "pE0" => truncated(Normal(0.001, 0.1), 0, 1),
   "sigD" => InverseGamma(2,3),
   "sigC" => InverseGamma(2,3),
-  "sigRc" => InverseGamma(2,3))
+  "sigRc" => InverseGamma(2,3),
+  "ρ[1]" => truncated(Normal(0.5, 2), 0, 1), 
+  "ρ[2]" => truncated(Normal(30, 30), 0, 100)
 ```
 
 Summary statistics of draws from this prior distribution are below.
 
 ```julia
-pr = priorreport()
+priors = CovidSEIR.TimeVarying.defaultpriors()
+population=1e6
+T = 150
+ode = CovidSEIR.TimeVarying.odeSEIR()
+model=CovidSEIR.TimeVarying.turingmodel1(population, 1:T, missing, missing, missing,ode, priors);
+pr = CovidSEIR.priorreport(priors, 150,population,model=model)
 pr.tbl
 ```
 The following plots show the implications of this prior for the
@@ -192,7 +209,7 @@ We estimate the model by MCMC. Specifically, we use the
 [Turing.jl](https://github.com/TuringLang/Turing.jl) package
 [@ge2018t] . For sampling, we use the No-U-Turn-Sampler variant of
 Hamiltonian Monte Carlo. In the results below we use 4 chains with
-1000 warmup iterations, and 1000 iterations for the results.
+1000 warmup iterations, and 4000 iterations for the results.
 
 # Results
 
@@ -204,10 +221,10 @@ Hamiltonian Monte Carlo. In the results below we use 4 chains with
 
 # Extensions
 
-1. Estimate single country model for more countries/areas.
+1. Improve chain mixing.
 2. Estimate a multi-country model with some parameters common across
    countries and others multi-level distributions.
-3. Allow time varying parameters. 
+
 
 # About this document
 

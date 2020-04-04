@@ -33,13 +33,13 @@ italy = CountryData(covdf, "Italy");
 ```
 
 ```julia; eval=false
-itmod = countrymodel(italy)
-cc = Turing.psample(itmod, NUTS(0.65), 10000, 4)
+itmod = CovidSEIR.TimeVarying.countrymodel(italy)
+cc = Turing.psample(itmod, NUTS(0.65), 5000, 4)
 import JLD2
-JLD2.@save "$jmddir/italy_$(Dates.today()).jld2" cc
+JLD2.@save "$jmddir/italy_tv_$(Dates.today()).jld2" cc
 ```
 ```julia
-JLD2.@load "$jmddir/italy_2020-03-30.jld2" cc;
+JLD2.@load "$jmddir/italy_tv_2020-04-03.jld2" cc;
 ```
 
 ## Estimates
@@ -51,14 +51,10 @@ plot(cc)
 describe(cc)
 ```
 
-Compared to Canada, Italy has a very low estimate of
-$\tau$. Apparently a high number of undetected cases helps to explain
-the rapid growth in confirmed cases in Italy.
-
 ## Fit
 
 ```julia
-sdf = simtrajectories(cc, italy, 1:150)
+sdf = simtrajectories(cc, italy, 1:200)
 f = plotvars(sdf, italy)
 f.fit
 ```
@@ -74,5 +70,3 @@ for fig in f.trajectories
 end
 ```
 
-The posterior estimates imply that Italy has about 10 times as many
-undetected cases as detected.

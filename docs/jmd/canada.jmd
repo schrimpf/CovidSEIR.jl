@@ -36,14 +36,14 @@ canada = CountryData(covdf, "Canada");
 
 ```julia; eval=false
 using Turing
-canmod = countrymodel(canada)
-cc = Turing.psample(canmod, NUTS(0.65), 10000, 4)
+canmod = CovidSEIR.TimeVarying.countrymodel(canada)
+cc = Turing.psample(canmod, NUTS(0.65), 5000, 4)
 import JLD2
 JLD2.@save "$jmddir/canada_$(Dates.today()).jld2" cc
 ```
 
 ```julia
-JLD2.@load "$jmddir/canada_2020-03-30.jld2" cc;
+JLD2.@load "$jmddir/canada_tv_2020-04-03.jld2" cc dayt0;
 ```
 
 ## Estimates
@@ -65,7 +65,7 @@ The parameter estimates are generally not very precise.
 ## Fit
 
 ```julia
-sdf = simtrajectories(cc, canada, 1:150)
+sdf = simtrajectories(cc, canada, 1:200)
 f = plotvars(sdf, canada)
 f.fit
 ```
@@ -74,11 +74,6 @@ In this figure, solid lines are observed data, dashed lines are
 posterior means, and the shaded region is a pointwise 90\% credible
 interval. 
 
-Note that the last day of data used in the estimation was March 27th.
-The fit appears quite good. The fitted estimates are also remarkably
-precise. Although individual parameters are not precisely estimated,
-the combination of them that gives rise to the observed data is
-precisely estimated. 
 
 ## Implications
 

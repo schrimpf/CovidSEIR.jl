@@ -171,13 +171,18 @@ begin
 end
 
 """
-    priorreport((priors=defaultcountrypriors(), T=100, population=1e7)
+    priorreport(priors=defaultcountrypriors(), T=100, population=1e7;
+                     colors=ColorSchemes.colorschemes[:Set1_9],
+                     model=turingmodel1(population, 1:T, missing, missing, missing, odeSEIR(), priors))
+
 
 Create tables and figures summarizing priors.
 """
 function priorreport(priors=defaultcountrypriors(), T=100, population=1e7;
-                     colors=ColorSchemes.colorschemes[:Set1_9])
-  sim = turingmodel1(population, 1:T, missing, missing, missing, odeSEIR(), priors)
+                     colors=ColorSchemes.colorschemes[:Set1_9],
+                     model=turingmodel1(population, 1:T, missing, missing, missing, odeSEIR(), priors)
+                     )
+  sim = model
   d = sim()
   alpha = 0.05
   toplot(d) = [d.active, d.recovered, d.dead]./population
@@ -209,26 +214,19 @@ function priorreport(priors=defaultcountrypriors(), T=100, population=1e7;
   
   combofig=plot(fig..., title=["Active Confirmed Cases" "Recoveries" "Deaths"], link=:x, layout=(3,1))
 
-  @model pm(priors, ::Type{R}=Float64) where  {R <: Real} =begin
-    L = 2
-    β = Vector{R}(undef, 2)
-    p = Vector{R}(undef, 2)
-    γ = Vector{R}(undef, 2)
-    a ~ priors["a"] 
-    for i in 1:L
-      p[i] ~ priors["p[$i]"]
-      γ[i] ~ priors["γ[$i]"]
-      β[i] ~ priors["β[$i]"]
-    end
-    τ ~ priors["τ"]
-    pE0 ~ priors["pE0"]
-    sigD  ~ priors["sigD"]
-    sigC ~ priors["sigC"]
-    sigRc ~ priors["sigRc"]
+
+  tbl = DataFrames.DataFrame(parameter = [], mean=[], stddev=[], q5=[], q50=[], q95=[])
+  for (k, v) in priors
+    x = rand(v, 10000)
+    DataFrames.append!(tbl , DataFrames.DataFrame(parameter = [k],
+                                                  mean=[Statistics.mean(x)],
+                                                  stddev=[Statistics.std(x)],
+                                                  q5 = [Statistics.quantile(x, 0.05)],
+                                                  q50 = [Statistics.quantile(x, 0.5)],
+                                                  q95 = [Statistics.quantile(x, 0.95)]))
   end
-  pc = sample(pm(priors), NUTS(0.65), 500)
-  
-  return(all=combofig, figs=fig, tbl=describe(pc))
+  DataFrames.sort!(tbl, :parameter)     
+  return(all=combofig, figs=fig, tbl=tbl)
 end
 
 """
@@ -244,7 +242,7 @@ function simtrajectories(cc::AbstractMCMC.AbstractChains,
                          data::CountryData, ts;
                          ic=Iterators.product(StatsBase.sample(1:size(cc,1),300, replace=false),
                                               1:size(cc,3)))
-  ode = odeSEIR()
+  ode =   "ρ[1]" in cc.name_map.parameters ? TimeVarying.odeSEIR() : odeSEIR()
   df = DataFrames.DataFrame()
   for (i, c) in ic
     a = cc.value[i, "a", c]
@@ -256,7 +254,13 @@ function simtrajectories(cc::AbstractMCMC.AbstractChains,
     sigD = cc.value[i,"sigD",c]
     sigRc = cc.value[i,"sigRc",c]
     τ = cc.value[i,"τ",c]
-    param=[(β./data.population)..., γ..., p..., τ, a]
+    if "ρ[1]" in cc.name_map.parameters
+      β = [cc.value[i,"β[1]",c], cc.value[i,"β[2]",c], cc.value[i,"β[3]",c]]
+      ρ = [cc.value[i,"ρ[1]",c], cc.value[i,"ρ[2]",c]]
+      param=TimeVarying.paramvec(β./data.population, γ, p, τ, a, ρ)
+    else
+      param=paramvec(β./data.population, γ, p, τ, a, ρ)
+    end
     u0 = [data.population*(1-pE0), data.population*pE0, zeros(6)...]
     devars = [:S, :E, :I, :C1, :C2, :R, :Rc, :X]
     probc = remake(ode, tspan = (0.0, Float64(maximum(ts))),u0=u0, p=param)

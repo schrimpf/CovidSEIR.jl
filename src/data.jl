@@ -56,6 +56,7 @@ function covidjhudata(;redownload=false)
 
   csvfile=normpath(joinpath(dirname(Base.find_package("CovidSEIR")),"..","data","cpop.csv"))
   if (redownload || !isfile(csvfile))
+    mkpath(normpath(joinpath(dirname(Base.find_package("CovidSEIR")),"..","data")))
     tmp = DataFrames.DataFrame(iso2c=unique(skipmissing(df.iso2c)))
     tmp.cpop = Vector{Union{Missing,Float64}}(undef, DataFrames.nrow(tmp))
     tmp.cpop .= missing

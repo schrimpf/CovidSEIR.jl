@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <meta name="author" content="Paul Schrimpf">
+        
+        <link rel="shortcut icon" href="../img/favicon.ico">
+        <title>Reproductive number - CovidSEIR.jl</title>
+        <link href="../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/atelier-forest-light.min.css">
+        <link href="../assets/Documenter.css" rel="stylesheet">
+        <link href="../assets/extra.css" rel="stylesheet">
+
+        <script src="../js/jquery-1.10.2.min.js" defer></script>
+        <script src="../js/bootstrap.min.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="..">CovidSEIR.jl</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="navitem">
+                                <a href=".." class="nav-link">Package Docs</a>
+                            </li>
+                            <li class="dropdown active">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">SEIR Model and Results <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../covid/" class="dropdown-item">Model</a>
+</li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Results</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../canada/" class="dropdown-item">Canada</a>
+</li>
+            
+<li>
+    <a href="../italy/" class="dropdown-item">Italy</a>
+</li>
+            
+<li>
+    <a href="../korea/" class="dropdown-item">South Korea</a>
+</li>
+            
+<li>
+    <a href="../china/" class="dropdown-item">China</a>
+</li>
+            
+<li>
+    <a href="../us/" class="dropdown-item">United States</a>
+</li>
+    </ul>
+  </li>
+                                    
+<li>
+    <a href="../state/" class="dropdown-item">US States</a>
+</li>
+                                    
+<li>
+    <a href="./" class="dropdown-item active">Reproductive number</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">About <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../license/" class="dropdown-item">License</a>
+</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../state/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../license/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="https://github.com/schrimpf/CovidSEIR.jl/edit/master/docs/Rt.md" class="nav-link"><i class="fa fa-github"></i> Edit on GitHub</a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-light navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-level="1"><a href="#model" class="nav-link">Model</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-level="1"><a href="#data" class="nav-link">Data</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-level="1"><a href="#statistical-model" class="nav-link">Statistical Model</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-level="2"><a href="#systroms-approach" class="nav-link">Systrom’s approach</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#an-alternative-approach" class="nav-link">An alternative approach</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<p><a href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a></p>
+<p>This work is licensed under a <a href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike
+4.0 International
+License</a></p>
+<h1 id="model">Model<a class="headerlink" href="#model" title="Permanent link">&para;</a></h1>
+<p>Following <a href="http://systrom.com/blog/the-metric-we-need-to-manage-covid-19/">Kevin
+Systrom</a>,
+we adapt the approach of (Bettencourt <a href="#ref-bettencourt2008">2008</a>) to
+compute real-time rolling estimates of pandemic parameters. (Bettencourt
+<a href="#ref-bettencourt2008">2008</a>) begin from a SIR model,</p>
+<p>
+<script type="math/tex; mode=display">
+\begin{align*}
+\dot{S} & = -\frac{S}{N} \beta I \\
+\dot{I} & = \frac{S}{N} \beta I - \gamma I \\
+\dot{R} & = \gamma I
+\end{align*}
+</script>
+</p>
+<p>To this we add the possibility that not all cases are known. Cases get
+get detected at rate $I$, so cumulative confirmed cases, $C$, evolves as</p>
+<p>
+<script type="math/tex; mode=display">
+\dot{C} = \tau I
+</script>
+</p>
+<div class="admonition question">
+<p class="admonition-title">Question</p>
+<p>Should we add other states to this model? If yes, how? I think
+using death and hospitalization numbers in estimation makes sense.</p>
+</div>
+<p>The number of new confirmed cases from time $t$ to $t+\delta$ is then:</p>
+<p>We will allow for the testing rate, $\tau$, and infection rate, $\beta$,
+to vary over time.</p>
+<p>
+<script type="math/tex; mode=display">
+k_t \equiv \frac{C(t+\delta) - C(t)}{\delta} = \int_t^{t+\delta} \tau(s) I(s) ds
+\approx \tau(t) I(t)
+</script>
+</p>
+<p>As in (Bettencourt <a href="#ref-bettencourt2008">2008</a>),</p>
+<p>
+<script type="math/tex; mode=display">
+\begin{align*}
+I(t) = & I(t-\delta) \int_{t-\delta}^{t} e^{\frac{S(s)}{N} \beta(s) -
+\gamma} ds \\
+\approx & I(t-\delta) e^{\delta \left( \frac{S(t-\delta)}{N}
+\beta(t-\delta) - \gamma \right)}
+\end{align*}
+</script>
+</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The reproductive number is:
+$R_t \equiv \frac{S(t)}{N}\frac{\beta(t)}{\gamma}$.</p>
+</div>
+<p>Substituting the expression for $I_t$ into $k_t$, we have</p>
+<p>
+<script type="math/tex; mode=display">
+\begin{align*}
+k_t \approx & \tau(t) I(t-\delta) e^{\delta \left(
+\frac{S(t-\delta)}{N} \beta(t-\delta) - \gamma\right)} \\
+\approx & k_{t-\delta} \frac{\tau(t)}{\tau(t-\delta)}
+e^{\delta \left(\frac{S(t-\delta)}{N} \beta(t-\delta) - \gamma \right)}
+\end{align*}
+</script>
+</p>
+<h1 id="data">Data<a class="headerlink" href="#data" title="Permanent link">&para;</a></h1>
+<p>We use the same data as the <a href="../state/">US state model</a>.</p>
+<p>The data combines information on</p>
+<ul>
+<li>Daily case counts and deaths from JHU CSSE</li>
+<li>Daily Hospitalizations, recoveries, and testing from the Covid
+    Tracking Project</li>
+<li>Covid related policy changes from Raifman et al</li>
+<li>Movements from Google Mobility Reports</li>
+<li>Hourly workers from Hoembase</li>
+</ul>
+<h1 id="statistical-model">Statistical Model<a class="headerlink" href="#statistical-model" title="Permanent link">&para;</a></h1>
+<p>The above theoretical model gives a deterministic relationship between
+$k_t$ and $k_{t-1}$ given the parameters. To bring it to data we must
+add stochasticity.</p>
+<h2 id="systroms-approach">Systrom’s approach<a class="headerlink" href="#systroms-approach" title="Permanent link">&para;</a></h2>
+<p>First we describe what Systrom does. He assumes that
+$R_{0} \sim Gamma(4,1)$. Then for $t=1, &hellip;, T$, he computes
+$P(R_t|k_{t}, k_{t-1}, &hellip; ,k_0)$ iteratively using Bayes’ rules.
+Specifically, he assumes <script type="math/tex; mode=display">
+k_t | R_t, k_{t-1}, ... \sim Poisson(k_{t-1} e^{\gamma(R_t - 1)})
+</script> and that $R_t$ follows a random walk, so the prior of $R_t | R_{t-1}$
+is <script type="math/tex; mode=display">
+R_t | R_{t-1} \sim N(R_{t-1}, \sigma^2)
+</script>
+</p>
+<p>so that</p>
+<p>
+<script type="math/tex; mode=display">
+P(R_t|k_{t}, k_{t-1}, ... ,k_0) = \frac{P(k_t | R_t, k_{t-1}) P(R_t |
+R_{t-1}) P(R_{t-1} | k_{t-1}, ...)} {P(k_t)}
+</script>
+</p>
+<p>Note that this computes posteriors of $R_t$ given current and past
+cases. Future cases are also informative of $R_t$, and you could instead
+compute $P(R_t | k_0, k_1, &hellip;, k_T)$.</p>
+<p>The notebook makes some mentions of Gaussian processes. There’s likely
+some way to recast the random walk assumption as a Gaussian process
+prior (the kernel would be $\kappa(t,t&rsquo;) = \min{t,t&rsquo;} \sigma^2$), but
+that seems to me like an unusual way to describe it.</p>
+<h2 id="an-alternative-approach">An alternative approach<a class="headerlink" href="#an-alternative-approach" title="Permanent link">&para;</a></h2>
+<p>Here we follow an approach similar in spirit to Systrom, with a few
+additions. First, we utilize data on movement and business operations as
+auxillary noisy measures of $R_t$. Second, we allow state policies to
+shift the mean of $R_t$. Third, we combine data from all states to
+improve precision in each. Fourth, we incorporate testing numbers into
+the data.</p>
+<p>As above, we assume that <script type="math/tex; mode=display">
+k_{st} | R_{st}, k_{s,t-1}, ... \sim Poisson(k_{s,t-1} \frac{\tau_{s,t}}{\tau_{s,t-1}} e^{\gamma(R_{st} - 1)})
+</script>
+</p>
+<div class="admonition question">
+<p class="admonition-title">Question</p>
+<p>Any distribution with mean
+$k_{t-1} \frac{\tau{t}}{\tau{t-1}} e^{\gamma(R_t - 1)}$ makes
+sense here. What other choice could incorporate measurement
+error so that cases don&rsquo;t need to be smoothed in advance?</p>
+</div>
+<p>We will allow state policies, $d_{s,t}$ to affect the mean of $R_t$.
+Specifically, we’ll assume that</p>
+<p>
+<script type="math/tex; mode=display">
+R_{st} | R_{s,t-1}, d_{st} \sim N(\alpha_r R_{t-1} +
+d_{s,t} \alpha, \sigma^2)
+</script>
+</p>
+<p>Measures of movement and business operations are used as noisy measures
+of $R_{s,t}$</p>
+<p>
+<script type="math/tex; mode=display">
+m_{s,t} ~ N(\lambda_r R_{s,t} + x_{st} \lambda, \Sigma_m)
+</script>
+</p>
+<p>where $x_{st}$ could include e.g. state demographics and day of week
+indicators.</p>
+<div class="admonition question">
+<p class="admonition-title">Question</p>
+<p>Should $x_{st}$ include policies? I think yes.</p>
+</div>
+<div class="admonition question">
+<p class="admonition-title">Question</p>
+<p>What to do about $\tau$? One idea is to assume
+$\frac{\tau_{s,t}}{\tau_{s,t-1}}$ is a function of test
+numbers. However, numbers of tests are likely responding to policies,
+$d_{st}$ and cases $k_{st}$.</p>
+</div>
+<p>The parameters $\gamma$, $\alpha$, $\lambda$, $\sigma$, and $\Sigma_m$
+are assumed to be common across states.</p>
+<div class="references hanging-indent" id="refs">
+<div id="ref-bettencourt2008">
+<p>Bettencourt, Ruy M., Luís M. A. AND Ribeiro. 2008. “Real Time Bayesian
+Estimation of the Epidemic Potential of Emerging Infectious Diseases.”
+<em>PLOS ONE</em> 3 (5): 1–9. <a href="https://doi.org/10.1371/journal.pone.0002185">https://doi.org/10.1371/journal.pone.0002185</a>.</p>
+</div>
+</div></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+                <p>Paul Schrimpf</p>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = "..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../js/base.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML" defer></script>
+        <script src="../assets/mathjaxhelper.js" defer></script>
+        <script src="../search/main.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    From here you can search these documents. Enter
+                    your search terms below.
+                </p>
+                <form>
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

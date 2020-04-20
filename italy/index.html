@@ -71,6 +71,14 @@
 </li>
     </ul>
   </li>
+                                    
+<li>
+    <a href="../state/" class="dropdown-item">US States</a>
+</li>
+                                    
+<li>
+    <a href="../Rt/" class="dropdown-item">Reproductive number</a>
+</li>
                                 </ul>
                             </li>
                             <li class="dropdown">
@@ -146,7 +154,7 @@
 <p>This work is licensed under a <a href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike
 4.0 International
 License</a></p>
-<pre><code class="julia">using CovidSEIR,  Plots, DataFrames, JLD2, StatsPlots
+<pre><code class="julia">using CovidSEIR,  Plots, DataFrames, JLD2, StatsPlots, MCMCChains
 Plots.pyplot()
 jmddir = normpath(joinpath(dirname(Base.find_package(&quot;CovidSEIR&quot;)),&quot;..&quot;,&quot;docs&quot;,&quot;jmd&quot;))
 covdf = covidjhudata();
@@ -162,64 +170,44 @@ import JLD2
 JLD2.@save &quot;$jmddir/italy_tv_$(Dates.today()).jld2&quot; cc
 </code></pre>
 
-<pre><code class="julia">JLD2.@load &quot;$jmddir/italy_tv_2020-04-09.jld2&quot; cc;
+<pre><code class="julia">JLD2.@load &quot;$jmddir/italy_dhmc_2020-04-13.jld2&quot; cc;
 </code></pre>
 
+<pre><code>Error: SystemError: opening file "/home/paul/.julia/dev/CovidSEIR/docs/jmd/
+italy_dhmc_2020-04-13.jld2": No such file or directory
+</code></pre>
+<pre><code class="julia">cc = MCMCChains.Chains(collect(cc.value.data), replace.(cc.name_map.parameters, r&quot;([^\[])([1-9])&quot; =&gt; s&quot;\1[\2]&quot;))
+</code></pre>
+
+<pre><code>Error: UndefVarError: cc not defined
+</code></pre>
 <h2 id="estimates">Estimates<a class="headerlink" href="#estimates" title="Permanent link">&para;</a></h2>
 <pre><code class="julia">plot(cc)
 </code></pre>
 
-<p><img alt="" src="../figures/italy_5_1.png" /></p>
+<pre><code>Error: UndefVarError: cc not defined
+</code></pre>
 <pre><code class="julia">describe(cc)
 </code></pre>
 
-<pre><code>2-element Array{MCMCChains.ChainDataFrame,1}
-
-Summary Statistics
-  parameters      mean      std  naive_se    mcse       ess   r_hat
-  ──────────  ────────  ───────  ────────  ──────  ────────  ──────
-           a    0.0918   0.0220    0.0002  0.0015  125.8536  1.0549
-         pE0    0.0000   0.0000    0.0000  0.0000   64.2570  1.7578
-        p[1]    0.1103   0.1443    0.0011  0.0113   64.2570  2.4900
-        p[2]    0.0126   0.0002    0.0000  0.0000  129.5575  1.0751
-        sigC  563.1422  71.6221    0.5662  4.5960   64.2570  1.4061
-        sigD  641.5850  53.1899    0.4205  2.5574  428.8297  1.0183
-       sigRc  178.9027  13.0396    0.1031  0.6532  270.1005  1.0158
-        β[1]    1.1445   0.6432    0.0051  0.0439   77.0584  1.1838
-        β[2]    0.5472   0.7284    0.0058  0.0455   64.2570  1.3809
-        β[3]    1.1273   0.5452    0.0043  0.0345   73.5978  1.1542
-        γ[1]    0.4753   0.2241    0.0018  0.0157   69.5237  1.1850
-        γ[2]    0.0118   0.0008    0.0000  0.0001   64.5862  1.3489
-        ρ[1]    0.6625   0.1455    0.0012  0.0109   64.2570  1.7251
-        ρ[2]   55.5034   0.6252    0.0049  0.0411   77.0301  1.1558
-           τ    0.0105   0.0154    0.0001  0.0012   64.2570  1.8762
-
-Quantiles
-  parameters      2.5%     25.0%     50.0%     75.0%     97.5%
-  ──────────  ────────  ────────  ────────  ────────  ────────
-           a    0.0724    0.0769    0.0848    0.0986    0.1569
-         pE0    0.0000    0.0000    0.0000    0.0000    0.0000
-        p[1]    0.0009    0.0022    0.0082    0.2151    0.4402
-        p[2]    0.0123    0.0125    0.0126    0.0127    0.0130
-        sigC  444.0093  506.1565  561.2079  612.7302  709.5893
-        sigD  548.4499  605.3234  637.1705  674.1551  757.6826
-       sigRc  154.9638  169.6807  178.5849  187.0179  207.3859
-        β[1]    0.0670    0.6874    1.0988    1.5789    2.4794
-        β[2]    0.0016    0.0099    0.1002    0.9525    2.4204
-        β[3]    0.2108    0.7410    1.1014    1.4251    2.2734
-        γ[1]    0.1798    0.3001    0.4403    0.6086    0.9975
-        γ[2]    0.0097    0.0114    0.0119    0.0123    0.0128
-        ρ[1]    0.3872    0.5323    0.6997    0.7916    0.8615
-        ρ[2]   54.2400   55.0843   55.5862   55.9259   56.6339
-           τ    0.0001    0.0001    0.0006    0.0177    0.0510
+<pre><code>Error: UndefVarError: cc not defined
 </code></pre>
 <h2 id="fit">Fit<a class="headerlink" href="#fit" title="Permanent link">&para;</a></h2>
 <pre><code class="julia">sdf = simtrajectories(cc, italy, 1:200)
-f = plotvars(sdf, italy)
-f.fit
 </code></pre>
 
-<p><img alt="" src="../figures/italy_7_1.png" /></p>
+<pre><code>Error: UndefVarError: cc not defined
+</code></pre>
+<pre><code class="julia">f = plotvars(sdf, italy)
+</code></pre>
+
+<pre><code>Error: UndefVarError: sdf not defined
+</code></pre>
+<pre><code class="julia">f.fit
+</code></pre>
+
+<pre><code>Error: UndefVarError: f not defined
+</code></pre>
 <p>As with Canada, the fit is very good, and the posterior distribution of
 observables is very precise.</p>
 <h2 id="implications">Implications<a class="headerlink" href="#implications" title="Permanent link">&para;</a></h2>
@@ -228,13 +216,8 @@ observables is very precise.</p>
 end
 </code></pre>
 
-<p><img alt="" src="../figures/italy_8_1.png" /> <img alt="" src="../figures/italy_8_2.png" />
-<img alt="" src="../figures/italy_8_3.png" /> <img alt="" src="../figures/italy_8_4.png" />
-<img alt="" src="../figures/italy_8_5.png" /> <img alt="" src="../figures/italy_8_6.png" />
-<img alt="" src="../figures/italy_8_7.png" /> <img alt="" src="../figures/italy_8_8.png" />
-<img alt="" src="../figures/italy_8_9.png" /> <img alt="" src="../figures/italy_8_10.png" />
-<img alt="" src="../figures/italy_8_11.png" /> <img alt="" src="../figures/italy_8_12.png" />
-<img alt="" src="../figures/italy_8_13.png" /> <img alt="" src="../figures/italy_8_14.png" /></p></div>
+<pre><code>Error: UndefVarError: f not defined
+</code></pre></div>
             </div>
         </div>
 

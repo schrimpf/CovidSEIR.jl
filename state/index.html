@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <meta name="author" content="Paul Schrimpf">
+        
+        <link rel="shortcut icon" href="../img/favicon.ico">
+        <title>US States - CovidSEIR.jl</title>
+        <link href="../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/atelier-forest-light.min.css">
+        <link href="../assets/Documenter.css" rel="stylesheet">
+        <link href="../assets/extra.css" rel="stylesheet">
+
+        <script src="../js/jquery-1.10.2.min.js" defer></script>
+        <script src="../js/bootstrap.min.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+        <script>hljs.initHighlightingOnLoad();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="..">CovidSEIR.jl</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar-collapse">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="navitem">
+                                <a href=".." class="nav-link">Package Docs</a>
+                            </li>
+                            <li class="dropdown active">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">SEIR Model and Results <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../covid/" class="dropdown-item">Model</a>
+</li>
+                                    
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Results</a>
+    <ul class="dropdown-menu">
+            
+<li>
+    <a href="../canada/" class="dropdown-item">Canada</a>
+</li>
+            
+<li>
+    <a href="../italy/" class="dropdown-item">Italy</a>
+</li>
+            
+<li>
+    <a href="../korea/" class="dropdown-item">South Korea</a>
+</li>
+            
+<li>
+    <a href="../china/" class="dropdown-item">China</a>
+</li>
+            
+<li>
+    <a href="../us/" class="dropdown-item">United States</a>
+</li>
+    </ul>
+  </li>
+                                    
+<li>
+    <a href="./" class="dropdown-item active">US States</a>
+</li>
+                                    
+<li>
+    <a href="../Rt/" class="dropdown-item">Reproductive number</a>
+</li>
+                                </ul>
+                            </li>
+                            <li class="dropdown">
+                                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">About <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="../license/" class="dropdown-item">License</a>
+</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ml-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-toggle="modal" data-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../us/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" href="../Rt/" class="nav-link">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="https://github.com/schrimpf/CovidSEIR.jl/edit/master/docs/state.md" class="nav-link"><i class="fa fa-github"></i> Edit on GitHub</a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-light navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-toggle="collapse" data-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-level="1"><a href="#data" class="nav-link">Data</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-level="1"><a href="#model" class="nav-link">Model</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-level="2"><a href="#heterogeneity" class="nav-link">Heterogeneity</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-level="1"><a href="#least-squares-estimates" class="nav-link">Least Squares estimates</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-level="2"><a href="#estimation" class="nav-link">Estimation</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-level="2"><a href="#results" class="nav-link">Results</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<p><a href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a></p>
+<p>This work is licensed under a <a href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike
+4.0 International
+License</a></p>
+<p>In this section we estimate a SEIR model using data from US States.
+Compared to the model in the <a href="../covid/">introductory section</a>, the state
+model introduces some additional components to incorporate additional
+data.</p>
+<h1 id="data">Data<a class="headerlink" href="#data" title="Permanent link">&para;</a></h1>
+<p>The data combines information on</p>
+<ul>
+<li>Daily case counts and deaths from JHU CSSE</li>
+<li>Daily Hospitalizations, recoveries, and testing from the Covid
+    Tracking Project</li>
+<li>Covid related policy changes from Raifman et al</li>
+<li>Movements from Google Mobility Reports</li>
+<li>Hourly workers from Hoembase</li>
+</ul>
+<h1 id="model">Model<a class="headerlink" href="#model" title="Permanent link">&para;</a></h1>
+<p>For each each the epidemic is modeled as:</p>
+<p>
+<script type="math/tex; mode=display">
+\begin{align*}
+\dot{S} & = -\frac{S}{N} \left(\beta_1(t) I_1 + \beta_2(t) C_1 + \beta_3(t) C_3\right) \\
+\dot{E} & = \frac{S}{N} \left(\beta_1(t) I_1 + \beta_2(t) C_1 + \beta_3(t) C_3\right) - a E \\
+\dot{I_1} & = a E - \gamma_1 I_1 - p_1 I_1 - \tau C_1 \\
+\dot{C_1}  & =  \tau I - \gamma_1 C_1 - p_1 C_1 \\
+\dot{C_2} & = p_1(I_1 + C_1) - \gamma_2 C_2 - p_2 C_2 \\
+\dot{R_u}  & = \sum_i \gamma_i I_i \\
+\dot{R_c} & = \sum_i \gamma_i C_i \\
+\dot{CC} & = (\tau + p_1)I_1 \\
+\dot{X}  & = p_2 C_2
+\end{align*}
+</script>
+</p>
+<p>where variables are defined as in the <a href="../covid/">introduction</a>, except
+$CC$, which is new. $CC$ is cumulative confirmed cases. Our data does
+not contain recoveries for all states, so it is not possible to
+calculate active cases. Our data does contain cumulative confirmed cases
+for every state.</p>
+<h2 id="heterogeneity">Heterogeneity<a class="headerlink" href="#heterogeneity" title="Permanent link">&para;</a></h2>
+<p>Some parameters are heterogenous across states and/or time.
+Specifically, we assume that for state $s$,</p>
+<p>
+<script type="math/tex; mode=display">
+\beta_{j,s}(t) = \beta_{j,0} \exp( x_{s,t} \alpha  + \epsilon_{\beta,s})
+</script>
+</p>
+<p>where $x_{s,t}$ are observables that shift infection rates. In the
+estimates below, $x_{s,t}$ will be indicators for whether a state of
+emergency, stay-at-home order, or other related policy is in place, and
+measures of movement and business operations.<sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup> $\epsilon_{\beta,s}$
+is an unobserved error term with mean $0$. Each of the components of $x$
+are $0$ in a baseline, pre-epidemic world. Hence $\beta_{j,0}$ is the
+(median across states) infection rate absent any policy or behavioral
+response. The model imposes that $\beta_{j}(t)/\beta_{k}(t)$ are
+constant across states and time. I have no opinion on whether this is a
+good assumption.</p>
+<p>Additionally, testing rates, $\tau_s$, and the portion of people exposed
+at time $0$, $p_{0,s}$ vary with state. Analogous, to the way $\beta$ is
+parameterized, we assume</p>
+<p>
+<script type="math/tex; mode=display">
+\tau_{s} = \tau e^{\epsilon_{\tau,s}}
+</script>
+</p>
+<p>and</p>
+<p>
+<script type="math/tex; mode=display">
+p_{0,s} = p_0 e^{\epsilon_{p,s}}.
+</script>
+</p>
+<p>Finally, we assume that $a$, $p_1$, $p_2$, $\gamma_1$, and $\gamma_2$
+are common across states and time. Arguably these could vary with state
+demographics (e.g. older populations have lower recovery and higher
+death rates), and over time with strain on the medical system. We
+abstract from these concerns for now.</p>
+<h1 id="least-squares-estimates">Least Squares estimates<a class="headerlink" href="#least-squares-estimates" title="Permanent link">&para;</a></h1>
+<p>It is much faster to compute least squares point estimates than a full
+Bayesian posterior. Although the statistical properties of these
+estimates are unclear, they give some idea of how well the model can fit
+the data, and serve as good initial values for computing Bayesian
+posteriors. Let $\theta = (a, p, \gamma, \tau, \beta, \alpha, \epsilon)$
+denote the parameters. We simply minimize</p>
+<p>
+<script type="math/tex; mode=display">
+\begin{align*}
+Q(\theta) = \sum_{s, t} & (dead_{s,t} - X_s(t))^2 + (cases_{s,t} - CC_{s}(t))^2 + \\
+& (hospitalized_{s,t} - C_{2,s}(t))^2 + (recovered_{s,t} - R_{c,s}(t)^2)
+\end{align*}
+</script>
+</p>
+<p>where $words$ are variables in the data, and capital letters are
+computed from the model (and implicitly depend on $\theta$).
+Hospitalizations and recoveries are not observed for all states and
+days, in which case those terms are simply omitted from the objective
+function.</p>
+<p>Given the equal weights to all observables, the objective function will
+be dominated by the cumulative cases terms. Particularly in the states
+and days where it is large.</p>
+<h2 id="estimation">Estimation<a class="headerlink" href="#estimation" title="Permanent link">&para;</a></h2>
+<pre><code class="julia">using CovidSEIR, Plots, VegaLite, PrettyTables, DataFrames, JLD2
+Plots.pyplot()
+df = CovidSEIR.statedata()
+ode = CovidSEIR.MultiRegion.odeSEIR()
+dat = CovidSEIR.RegionsData(df[df[!,:fips].&lt;60,:], idvar=:fips );
+</code></pre>
+
+<pre><code class="julia">out = CovidSEIR.LeastSquares.leastsquares(dat, ode)
+params = out.params
+@save &quot;jmd/states_$(Dates.today()).jld2&quot; params f
+</code></pre>
+
+<h2 id="results">Results<a class="headerlink" href="#results" title="Permanent link">&para;</a></h2>
+<h3 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h3>
+<pre><code class="julia">@load &quot;jmd/states_2020-04-19.jld2&quot; params
+parms = DataFrame()
+for k in keys(params)
+  if length(params[k])==1
+    global parms = vcat(parms, DataFrame(Parameter=string(k), Estimate=params[k]))
+  elseif k == :α
+    αnames = [&quot;Emergency&quot;,&quot;K12 closed&quot;,&quot;Stay at home&quot;,&quot;Restaurants closed&quot;,&quot;Non-essential businesses closed&quot;,
+              &quot;%/100 reduction workplaces&quot;,&quot;%/100 reduction grocery&quot;,&quot;%/100 reduction retail&quot;,
+              &quot;%/100 reduction hourly businesses open&quot;]
+    global parms = vcat(parms, DataFrame(Parameter=string(k).*αnames, Estimate=params[k]))
+  else
+    L = length(params[k])
+    global parms = vcat(parms, DataFrame(Parameter=string(k).*string.(1:L), Estimate=params[k]))
+  end
+end
+pretty_table(parms[1:19,:], formatters=ft_printf(&quot;%5.3g&quot;))
+</code></pre>
+
+<pre><code>┌─────────────────────────────────────────┬───────────┐
+│                               Parameter │  Estimate │
+│                                  String │   Float64 │
+├─────────────────────────────────────────┼───────────┤
+│                                      β1 │  0.000354 │
+│                                      β2 │     0.077 │
+│                                      β3 │      1.04 │
+│                                      γ1 │    0.0451 │
+│                                      γ2 │     0.019 │
+│                                      p1 │     1e-08 │
+│                                      p2 │    0.0379 │
+│                                       τ │      2.21 │
+│                                       a │    0.0356 │
+│                                     pE0 │  6.14e-06 │
+│                              αEmergency │    -0.098 │
+│                             αK12 closed │     -3.13 │
+│                           αStay at home │    -0.836 │
+│                     αRestaurants closed │     -2.33 │
+│        αNon-essential businesses closed │     -3.63 │
+│             α%/100 reduction workplaces │  -0.00287 │
+│                α%/100 reduction grocery │    -0.899 │
+│                 α%/100 reduction retail │ -0.000107 │
+│ α%/100 reduction hourly businesses open │     -4.99 │
+└─────────────────────────────────────────┴───────────┘
+</code></pre>
+<p>The parameter estimates have some apparent problems. The estimate of $a$
+is much smaller than expected. $1/a$ should be the period of time from
+infection to becoming contagious. This is generally believed to be
+around 5 days.</p>
+<p>$\beta_{1,0}$ being the smallest means that undetected infectious people
+are less likely to infect others compared to confirmed mildr or severe
+cases.</p>
+<p>The value of $\tau$ is very high.</p>
+<p>To avoid numeric difficulties in optimization, I restricted
+$-5 \leq \alpha \leq 0$. These constraints sometimes bind. For the
+policy variables, it is strange that the coefficient on stay at home is
+not the largest. The magnitude of these are quite larege. For example,
+closing non-essential businesses reduces infection rate to
+$e^{-3.63} \approx 0.026$ of what it is was. The combination of all
+policies cuts infection rates to about 1/20,000th of baseline.</p>
+<pre><code class="julia">display(histogram(params.eβ, label=&quot;ϵ_β&quot;))
+</code></pre>
+
+<p><img alt="" src="../figures/state_4_1.png" /></p>
+<pre><code class="julia">display(histogram(params.eτ, label=&quot;ϵ_τ&quot;))
+</code></pre>
+
+<p><img alt="" src="../figures/state_4_2.png" /></p>
+<pre><code class="julia">display(histogram(params.ep, label=&quot;ϵ_p&quot;))
+</code></pre>
+
+<p><img alt="" src="../figures/state_4_3.png" /></p>
+<h3 id="fit">Fit<a class="headerlink" href="#fit" title="Permanent link">&para;</a></h3>
+<pre><code class="julia">using TransformVariables
+trans = as( (β=as(Array, asℝ, 3),
+             γ=as(Array, asℝ, 2),
+             p=as(Array, asℝ, 2),
+             τ=asℝ, a=asℝ,  pE0=asℝ,
+             α=as(Array, asℝ, size(dat.X,1)),
+             eβ=as(Array, asℝ, length(dat.population)-1),
+             eτ=as(Array, asℝ, length(dat.population)-1),
+             ep=as(Array, asℝ, length(dat.population)-1)) )
+f = CovidSEIR.LeastSquares.plotfits(dat, ode, inverse(trans, params), trans)
+</code></pre>
+
+<pre><code>(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+(size(sol), size(tsave)) = ((9, 94), (94,))
+</code></pre>
+<pre><code class="julia">for fig in f.figs
+  display(fig)
+end
+</code></pre>
+
+<p><img alt="" src="../figures/state_5_1.png" /> <img alt="" src="../figures/state_5_2.png" />
+<img alt="" src="../figures/state_5_3.png" /> <img alt="" src="../figures/state_5_4.png" />
+<img alt="" src="../figures/state_5_5.png" /> <img alt="" src="../figures/state_5_6.png" />
+<img alt="" src="../figures/state_5_7.png" /> <img alt="" src="../figures/state_5_8.png" />
+<img alt="" src="../figures/state_5_9.png" /> <img alt="" src="../figures/state_5_10.png" />
+<img alt="" src="../figures/state_5_11.png" /> <img alt="" src="../figures/state_5_12.png" />
+<img alt="" src="../figures/state_5_13.png" /> <img alt="" src="../figures/state_5_14.png" />
+<img alt="" src="../figures/state_5_15.png" /> <img alt="" src="../figures/state_5_16.png" />
+<img alt="" src="../figures/state_5_17.png" /> <img alt="" src="../figures/state_5_18.png" />
+<img alt="" src="../figures/state_5_19.png" /> <img alt="" src="../figures/state_5_20.png" />
+<img alt="" src="../figures/state_5_21.png" /> <img alt="" src="../figures/state_5_22.png" />
+<img alt="" src="../figures/state_5_23.png" /> <img alt="" src="../figures/state_5_24.png" />
+<img alt="" src="../figures/state_5_25.png" /> <img alt="" src="../figures/state_5_26.png" />
+<img alt="" src="../figures/state_5_27.png" /> <img alt="" src="../figures/state_5_28.png" />
+<img alt="" src="../figures/state_5_29.png" /> <img alt="" src="../figures/state_5_30.png" />
+<img alt="" src="../figures/state_5_31.png" /> <img alt="" src="../figures/state_5_32.png" />
+<img alt="" src="../figures/state_5_33.png" /> <img alt="" src="../figures/state_5_34.png" />
+<img alt="" src="../figures/state_5_35.png" /> <img alt="" src="../figures/state_5_36.png" />
+<img alt="" src="../figures/state_5_37.png" /> <img alt="" src="../figures/state_5_38.png" />
+<img alt="" src="../figures/state_5_39.png" /> <img alt="" src="../figures/state_5_40.png" />
+<img alt="" src="../figures/state_5_41.png" /> <img alt="" src="../figures/state_5_42.png" />
+<img alt="" src="../figures/state_5_43.png" /> <img alt="" src="../figures/state_5_44.png" />
+<img alt="" src="../figures/state_5_45.png" /> <img alt="" src="../figures/state_5_46.png" />
+<img alt="" src="../figures/state_5_47.png" /> <img alt="" src="../figures/state_5_48.png" />
+<img alt="" src="../figures/state_5_49.png" /> <img alt="" src="../figures/state_5_50.png" />
+<img alt="" src="../figures/state_5_51.png" /></p>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:1">
+<p>Including movement and business operations in $x$ makes
+interpretation difficult. If we want to estimate policy effects, we
+should be using these auxillary measures in some other way. We
+should not be holding them constant or conditioning on them.&#160;<a class="footnote-backref" href="#fnref:1" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+                <p>Paul Schrimpf</p>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script>
+            var base_url = "..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../js/base.js" defer></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML" defer></script>
+        <script src="../assets/mathjaxhelper.js" defer></script>
+        <script src="../search/main.js" defer></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    From here you can search these documents. Enter
+                    your search terms below.
+                </p>
+                <form>
+                    <div class="form-group">
+                        <input type="text" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>

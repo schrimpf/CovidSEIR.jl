@@ -325,180 +325,87 @@ smoothing used. All of these posteriors ignore the uncertainty in the
 choice of smoothing parameters (and procedure).
 
 
-## An alternative approach
+# An alternative approach
 
 Here we follow an approach similar in spirit to Systrom, with a few
-additions. First, we utilize data on movement and business operations
+modifications and additions. The primary modification is that we alter
+the model of $k_t|k_{t-1}, R_t$ to allow measurement error in both
+$k_t$ and $k_{t-1}$. We make four additions.
+First, we utilize data on movement and business operations
 as auxillary noisy measures of $R_t$. Second, we allow state policies
 to shift the mean of $R_t$. Third, we combine data from all states to
 improve precision in each. Fourth, we incorporate testing numbers into
 the data.
 
-As above, we assume that
-$$
-k_{st} | R_{st}, k_{s,t-1}, ... \sim Poisson(k_{s,t-1} \frac{\tau_{s,t}}{\tau_{s,t-1}} e^{\gamma(R_{st} - 1)})
-$$
-
-!!! question
-
-    Any distribution with mean
-    $k_{t-1} \frac{\tau{t}}{\tau{t-1}} e^{\gamma(R_t - 1)}$ makes
-    sense here. What other choice could incorporate measurement
-    error so that cases don't need to be smoothed in advance?
-
-We will allow state policies, $d_{s,t}$ to affect the mean of
-$R_t$. Specifically, we'll assume that
+As above, we begin from the approximation
 
 $$
-R_{st} | R_{s,t-1}, d_{st} \sim N(\alpha_r R_{t-1} +
-d_{s,t} \alpha, \sigma^2)
+k^*_{s,t} \approx k^*_{s,t-1} \frac{\tau_{s,t}}{\tau_{s,t-1}} e^{\gamma(R_{st} - 1)})
 $$
 
-Measures of movement and business operations are used as noisy
-measures of $R_{s,t}$
+where $k^*$ is the true, unobserved number of new cases. Taking logs
+and rearranging we have
 
 $$
-m_{s,t} ~ N(\lambda_r R_{s,t} + x_{st} \lambda, \Sigma_m)
+\log(k^*_{s,t}) - \log(k^*_{s,t-1}) = \gamma(R_{s,t} - 1) +
+\log\left(\frac{\tau_{s,t}}{\tau_{s,t-1}}\right)
 $$
 
-where $x_{st}$ could include e.g. state demographics and day of week
-indicators.
+Let $k_{s,t}$ be the noisy observed value of $k^*_{s,t}$, then
 
-!!! question
+$$
+\log(k_{s,t}) - \log(k_{s,t-1}) = \gamma(R_{s,t} - 1) +
+\log\left(\frac{\tau_{s,t}}{\tau_{s,t-1}}\right) - \epsilon_{s,t} + \epsilon_{s,t-1}
+$$
 
-    Should $x_{st}$ include policies? I think yes.
+where
+$$
+ \log(k^*_{s,t}) =  \log(k_{s,t}) +\epsilon_{s,t}
+$$
+and $\epsilon_{s,t}$ is measurement error.
 
+With appropriate assumptions on $\epsilon$, $\tau$, $R$ and other
+observables, we can then use regression to estimate $R$.
 
-!!! question
+As a simple example, let's assume
 
-    What to do about $\tau$? One idea is to assume
-    $\frac{\tau_{s,t}}{\tau_{s,t-1}}$ is a function of test
-    numbers. However, numbers of tests are likely responding to policies,
-    $d_{st}$ and cases $k_{st}$.
+1. $R_{s,t} = R_{s,0} + \alpha d_{s,t}$ where $d_{s,t}$ are indicators
+for NPI's being in place.
+2. That $\tau_{s,t}$ is constant over time for each $s$
+3. $E[\epsilon_{s,t} - \epsilon_{s,t-1}|d] = 0$ and $\epsilon_{s,t} -
+\epsilon_{s,t-1}$ is uncorrelated over time (just to simplify; this is
+not a good assumption).
 
-The parameters $\gamma$, $\alpha$, $\lambda$, $\sigma$, and $\Sigma_m$
-are assumed to be common across states.
-
-# Code
-
-The model
-
-```julia; eval=false
-using Turing, CovidSEIR, Plots, PrettyTables, Dates
-using LinearAlgebra: dot, diagm, Symmetric, I
-
-@model rt(cases, m, d, x, ::Type{Rtype}=Float64) where {Rtype <: Real} = begin
-  # Priors
-  γ ~ truncated(Normal(1/7, 1/2), 1/21, 1/3)
-  σ ~ truncated(Normal(0.25,1), 1e-6, Inf)
-  meanR0 ~ truncated(Normal(3, 2), 0, Inf)
-  sigR0 ~ truncated(Normal(1,1), 1e-2, Inf)
-  αR ~ truncated(Normal(0.5, 2), -0.9, 0.9)
-  α ~ MvNormal(zeros(size(d, 1)), 1.0)
-  λR ~ MvNormal(zeros(size(m, 1)), 1.0)
-  λ ~ MvNormal(zeros(size(m,1)*size(x,1)), 1.0)
-  λ = reshape(λ, size(m,1), size(x,1))
-  J = size(m,1)
-  #Cm ~ LKJ(J, 2.0)
-  #m = diagm(ones(J))
-  sm ~ MvNormal(zeros(J), 1)
-  Σm = diagm(exp.(sm)) + I*1e-4
-  #Σm = Cm.*(exp.(sm)*exp.(sm)')
-  #Σm ~ Wishart(J+2, diagm(ones(J))*1/(2*0.001))
-  if (cases === missing) # for simulating the model
-    cases = Matrix{Rtype}(undef, T, S)
-  end
-  J, T, S = size(m)
-  @assert (T,S) == size(cases)
-  @assert size(x,2) == T && size(d,2) == T
-  @assert size(x,3) == S && size(d,3) == S
-  R = Matrix{Rtype}(undef, T, S)
-  e = Matrix{Rtype}(undef, T, S)
-  for s in 1:S
-    R[1,s] = meanR0
-    e[1,s] ~ Normal(0, sigR0)
-    for t in 2:T
-      e[t,s] ~ Normal(αR*e[t-1,s], σ)
-      R[t,s] = e[t,s] + dot(α, d[:,t,s])
-      #R[t,s] ~ truncated(Normal(αR*R[t-1,s] + dot(α,d[:,t,s]), σ), 0, 20)
-      if (t>2) # cases[1,s] is missing because cases is the diff of cumulative cases
-        meank = max(cases[t-1, s], 1e-1)*exp(γ*(R[t,s]-1))
-        #@show t, meank, cases[t-1,s], R[t,s], meanR0, sigR0, αR
-        cases[t, s] ~ Poisson(meank)
-        #cases[t,s] ~ truncated(Normal(meank, meank), 0, Inf)
-      end
-      if !any(ismissing.(m[:,t,s]))
-        m[:,t,s] ~ MvNormal(λR*R[t,s] + λ*x[:,t,s],  Symmetric(Σm))
-      end
-    end
-  end
-  return(cases, R) # return only matters when simulating model
-end
-
-```
-
-Prepare the data.
-
-```julia; eval=false
-df = CovidSEIR.statedata()
-df = df[df[!,:fips].<60,:] # get ride of non-states (AS, GU, etc)
-
-df[!, :weekend] = 1*(Dates.dayofweek.(df[!,:date]) .>= 6)
+```julia
+using GLM, RegressionTables
 pvars = [Symbol("Stay.at.home..shelter.in.place"),
          Symbol("State.of.emergency"),
          Symbol("Date.closed.K.12.schools"),
-         #Symbol("Closed.day.cares"),
-         #Symbol("Date.banned.visitors.to.nursing.homes"),
+         Symbol("Closed.gyms"),
+         Symbol("Closed.movie.theaters"),
+         Symbol("Closed.day.cares"),
+         Symbol("Date.banned.visitors.to.nursing.homes"),
          Symbol("Closed.non.essential.businesses"),
          Symbol("Closed.restaurants.except.take.out")]
-dvars=  [:weekend]
-mvars =  [:retail_and_recreation_percent_change_from_baseline,
-          :grocery_and_pharmacy_percent_change_from_baseline,
-          #:parks_percent_change_from_baseline,
-          #:transit_stations_percent_change_from_baseline,
-          #:workplaces_percent_change_from_baseline,
-          #:residential_percent_change_from_baseline,
-          #:percentchangehours,
-          :percentchangebusinesses]
-xvars = dvars
-
-states = unique(df[!,:state])
-dates = sort(unique(df[!,:date]))
-S = length(states)
-T = length(dates)
-d = Array{Float64,3}(undef, length(dvars) + length(pvars), T, S)
-x = Array{Float64,3}(undef, length(xvars) + length(pvars), T, S)
-m = Array{Union{Missing,Float64},3}(missing, length(mvars), T, S)
-cc = Matrix{Union{Missing,Float64}}(missing, T,S)
-cases = Matrix{Union{Missing,Float64}}(missing, T,S)
-for (s, st) in enumerate(states)
-  for (t, dt) in enumerate(dates)
-    inc = findall((df[!,:state] .== st) .& (df[!,:date] .==dt))
-    @assert length(inc)==1
-    i = inc[1]
-    p = convert(Array, df[i,pvars]) .< dt
-    p[ismissing.(p)] .= false
-    d[:,t,s] .= vcat(p, convert(Array, df[i, dvars]))
-    x[:,t,s] .= vcat(p, convert(Array, df[i, xvars]))
-    m[:,t,s] .= convert(Array, df[i, mvars])./100
-    cc[t,s] = df[i, :cases]
-    if (t>1)
-      cases[t,s] = max(0.0,cc[t,s] - cc[t-1,s])
-    end
-  end
+sdf = copy(df)
+for p in pvars
+  sdf[!,p] = by(sdf, :state, (:date, p) => x->(!ismissing(unique(x[p])[1]) .& (x.date .>= unique(x[p])[1]))).x1
 end
+sdf = sort(sdf, [:state, :date])
+sdf[!,:newcases] = by(sdf, :state, newcases = :cases => x->(vcat(missing, diff(x))))[!,:newcases]
+sdf[!,:dlogk] = by(sdf, :state, dlogk = :newcases => x->(vcat(missing, diff(log.(max.(x,0.1))))))[!,:dlogk]
+
+fmla = FormulaTerm(Term(:dlogk), Tuple(Term.(vcat(pvars,:state))))
+reg = lm(fmla, sdf)
+regtable(reg, renderSettings=asciiOutput())
 ```
 
-Estimation
+From this we get that if we assume $\gamma = 1/7$, then the the
+baseline estimate of $R$ in Illinois is $7(0.046 + 0.034) + 1\approx
+1.56$ with a stay at home order, $R$ in Illinois becomes $7(0.046 +
+0.035 - 0.147) + 1 \approx 0.53$.
 
-```julia; eval=false
-mdl = rt(cases, m, d, x)
-#@time  chain=Turing.sample(mdl, HMC(1e-6, 3), 50);
-
-#using Turing.Variational
-#q0 = Variational.meanfield(mdl);
-#advi = ADVI(10, 10_000)
-#@time q = vi(mdl, ADVI(10,100), q0, optimizer=Variational.DecayedADAGrad(1e-2, 1.1, 0.9));
-#chain = Turing.sample(mdl, NUTS(500, 0.65, max_depth=4, init_ϵ=1e-4), 1000)
-
-```
+Some of the policies have positive coefficient estimates, which is
+strange. This is likely due to assumption 1 being incorrect. There is
+likely an unobserved component of $R_{s,t}$ that is positively
+correlated with policy indicators.

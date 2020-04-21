@@ -145,14 +145,10 @@
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-level="2"><a href="#an-alternative-approach" class="nav-link">An alternative approach</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
               </ul>
             </li>
             
-            <li class="nav-item" data-level="1"><a href="#code_1" class="nav-link">Code</a>
+            <li class="nav-item" data-level="1"><a href="#an-alternative-approach" class="nav-link">An alternative approach</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -512,169 +508,212 @@ end
 <p>Here we see that we can get a variety of results depending on the
 smoothing used. All of these posteriors ignore the uncertainty in the
 choice of smoothing parameters (and procedure).</p>
-<h2 id="an-alternative-approach">An alternative approach<a class="headerlink" href="#an-alternative-approach" title="Permanent link">&para;</a></h2>
+<h1 id="an-alternative-approach">An alternative approach<a class="headerlink" href="#an-alternative-approach" title="Permanent link">&para;</a></h1>
 <p>Here we follow an approach similar in spirit to Systrom, with a few
-additions. First, we utilize data on movement and business operations as
-auxillary noisy measures of $R_t$. Second, we allow state policies to
-shift the mean of $R_t$. Third, we combine data from all states to
-improve precision in each. Fourth, we incorporate testing numbers into
-the data.</p>
-<p>As above, we assume that <script type="math/tex; mode=display">
-k_{st} | R_{st}, k_{s,t-1}, ... \sim Poisson(k_{s,t-1} \frac{\tau_{s,t}}{\tau_{s,t-1}} e^{\gamma(R_{st} - 1)})
-</script>
-</p>
-<div class="admonition question">
-<p class="admonition-title">Question</p>
-<p>Any distribution with mean
-$k_{t-1} \frac{\tau{t}}{\tau{t-1}} e^{\gamma(R_t - 1)}$ makes
-sense here. What other choice could incorporate measurement
-error so that cases don&rsquo;t need to be smoothed in advance?</p>
-</div>
-<p>We will allow state policies, $d_{s,t}$ to affect the mean of $R_t$.
-Specifically, we’ll assume that</p>
+modifications and additions. The primary modification is that we alter
+the model of $k_t|k_{t-1}, R_t$ to allow measurement error in both $k_t$
+and $k_{t-1}$. We make four additions. First, we utilize data on
+movement and business operations as auxillary noisy measures of $R_t$.
+Second, we allow state policies to shift the mean of $R_t$. Third, we
+combine data from all states to improve precision in each. Fourth, we
+incorporate testing numbers into the data.</p>
+<p>As above, we begin from the approximation</p>
 <p>
 <script type="math/tex; mode=display">
-R_{st} | R_{s,t-1}, d_{st} \sim N(\alpha_r R_{t-1} +
-d_{s,t} \alpha, \sigma^2)
+k^*_{s,t} \approx k^*_{s,t-1} \frac{\tau_{s,t}}{\tau_{s,t-1}} e^{\gamma(R_{st} - 1)})
 </script>
 </p>
-<p>Measures of movement and business operations are used as noisy measures
-of $R_{s,t}$</p>
+<p>where $k^*$ is the true, unobserved number of new cases. Taking logs and
+rearranging we have</p>
 <p>
 <script type="math/tex; mode=display">
-m_{s,t} ~ N(\lambda_r R_{s,t} + x_{st} \lambda, \Sigma_m)
+\log(k^*_{s,t}) - \log(k^*_{s,t-1}) = \gamma(R_{s,t} - 1) +
+\log\left(\frac{\tau_{s,t}}{\tau_{s,t-1}}\right)
 </script>
 </p>
-<p>where $x_{st}$ could include e.g. state demographics and day of week
-indicators.</p>
-<div class="admonition question">
-<p class="admonition-title">Question</p>
-<p>Should $x_{st}$ include policies? I think yes.</p>
-</div>
-<div class="admonition question">
-<p class="admonition-title">Question</p>
-<p>What to do about $\tau$? One idea is to assume
-$\frac{\tau_{s,t}}{\tau_{s,t-1}}$ is a function of test
-numbers. However, numbers of tests are likely responding to policies,
-$d_{st}$ and cases $k_{st}$.</p>
-</div>
-<p>The parameters $\gamma$, $\alpha$, $\lambda$, $\sigma$, and $\Sigma_m$
-are assumed to be common across states.</p>
-<h1 id="code_1">Code<a class="headerlink" href="#code_1" title="Permanent link">&para;</a></h1>
-<p>The model</p>
-<pre><code class="julia">using Turing, CovidSEIR, Plots, PrettyTables, Dates
-using LinearAlgebra: dot, diagm, Symmetric, I
-
-@model rt(cases, m, d, x, ::Type{Rtype}=Float64) where {Rtype &lt;: Real} = begin
-  # Priors
-  γ ~ truncated(Normal(1/7, 1/2), 1/21, 1/3)
-  σ ~ truncated(Normal(0.25,1), 1e-6, Inf)
-  meanR0 ~ truncated(Normal(3, 2), 0, Inf)
-  sigR0 ~ truncated(Normal(1,1), 1e-2, Inf)
-  αR ~ truncated(Normal(0.5, 2), -0.9, 0.9)
-  α ~ MvNormal(zeros(size(d, 1)), 1.0)
-  λR ~ MvNormal(zeros(size(m, 1)), 1.0)
-  λ ~ MvNormal(zeros(size(m,1)*size(x,1)), 1.0)
-  λ = reshape(λ, size(m,1), size(x,1))
-  J = size(m,1)
-  #Cm ~ LKJ(J, 2.0)
-  #m = diagm(ones(J))
-  sm ~ MvNormal(zeros(J), 1)
-  Σm = diagm(exp.(sm)) + I*1e-4
-  #Σm = Cm.*(exp.(sm)*exp.(sm)')
-  #Σm ~ Wishart(J+2, diagm(ones(J))*1/(2*0.001))
-  if (cases === missing) # for simulating the model
-    cases = Matrix{Rtype}(undef, T, S)
-  end
-  J, T, S = size(m)
-  @assert (T,S) == size(cases)
-  @assert size(x,2) == T &amp;&amp; size(d,2) == T
-  @assert size(x,3) == S &amp;&amp; size(d,3) == S
-  R = Matrix{Rtype}(undef, T, S)
-  e = Matrix{Rtype}(undef, T, S)
-  for s in 1:S
-    R[1,s] = meanR0
-    e[1,s] ~ Normal(0, sigR0)
-    for t in 2:T
-      e[t,s] ~ Normal(αR*e[t-1,s], σ)
-      R[t,s] = e[t,s] + dot(α, d[:,t,s])
-      #R[t,s] ~ truncated(Normal(αR*R[t-1,s] + dot(α,d[:,t,s]), σ), 0, 20)
-      if (t&gt;2) # cases[1,s] is missing because cases is the diff of cumulative cases
-        meank = max(cases[t-1, s], 1e-1)*exp(γ*(R[t,s]-1))
-        #@show t, meank, cases[t-1,s], R[t,s], meanR0, sigR0, αR
-        cases[t, s] ~ Poisson(meank)
-        #cases[t,s] ~ truncated(Normal(meank, meank), 0, Inf)
-      end
-      if !any(ismissing.(m[:,t,s]))
-        m[:,t,s] ~ MvNormal(λR*R[t,s] + λ*x[:,t,s],  Symmetric(Σm))
-      end
-    end
-  end
-  return(cases, R) # return only matters when simulating model
-end
-</code></pre>
-
-<p>Prepare the data.</p>
-<pre><code class="julia">df = CovidSEIR.statedata()
-df = df[df[!,:fips].&lt;60,:] # get ride of non-states (AS, GU, etc)
-
-df[!, :weekend] = 1*(Dates.dayofweek.(df[!,:date]) .&gt;= 6)
+<p>Let $k_{s,t}$ be the noisy observed value of $k^*_{s,t}$, then</p>
+<p>
+<script type="math/tex; mode=display">
+\log(k_{s,t}) - \log(k_{s,t-1}) = \gamma(R_{s,t} - 1) +
+\log\left(\frac{\tau_{s,t}}{\tau_{s,t-1}}\right) - \epsilon_{s,t} + \epsilon_{s,t-1}
+</script>
+</p>
+<p>where <script type="math/tex; mode=display">
+ \log(k^*_{s,t}) =  \log(k_{s,t}) +\epsilon_{s,t}
+</script> and $\epsilon_{s,t}$ is measurement error.</p>
+<p>With appropriate assumptions on $\epsilon$, $\tau$, $R$ and other
+observables, we can then use regression to estimate $R$.</p>
+<p>As a simple example, let’s assume</p>
+<ol>
+<li>$R_{s,t} = R_{s,0} + \alpha d_{s,t}$ where $d_{s,t}$ are indicators
+    for NPI’s being in place.</li>
+<li>That $\tau_{s,t}$ is constant over time for each $s$</li>
+<li>$E[\epsilon_{s,t} - \epsilon_{s,t-1}|d] = 0$ and
+    $\epsilon_{s,t} - \epsilon_{s,t-1}$ is uncorrelated over time (just
+    to simplify; this is not a good assumption).</li>
+</ol>
+<p>```{=html}
+<!-- --></p>
+<pre><code>``` julia
+using GLM
 pvars = [Symbol(&quot;Stay.at.home..shelter.in.place&quot;),
          Symbol(&quot;State.of.emergency&quot;),
          Symbol(&quot;Date.closed.K.12.schools&quot;),
-         #Symbol(&quot;Closed.day.cares&quot;),
-         #Symbol(&quot;Date.banned.visitors.to.nursing.homes&quot;),
+         Symbol(&quot;Closed.day.cares&quot;),
+         Symbol(&quot;Date.banned.visitors.to.nursing.homes&quot;),
          Symbol(&quot;Closed.non.essential.businesses&quot;),
          Symbol(&quot;Closed.restaurants.except.take.out&quot;)]
-dvars=  [:weekend]
-mvars =  [:retail_and_recreation_percent_change_from_baseline,
-          :grocery_and_pharmacy_percent_change_from_baseline,
-          #:parks_percent_change_from_baseline,
-          #:transit_stations_percent_change_from_baseline,
-          #:workplaces_percent_change_from_baseline,
-          #:residential_percent_change_from_baseline,
-          #:percentchangehours,
-          :percentchangebusinesses]
-xvars = dvars
-
-states = unique(df[!,:state])
-dates = sort(unique(df[!,:date]))
-S = length(states)
-T = length(dates)
-d = Array{Float64,3}(undef, length(dvars) + length(pvars), T, S)
-x = Array{Float64,3}(undef, length(xvars) + length(pvars), T, S)
-m = Array{Union{Missing,Float64},3}(missing, length(mvars), T, S)
-cc = Matrix{Union{Missing,Float64}}(missing, T,S)
-cases = Matrix{Union{Missing,Float64}}(missing, T,S)
-for (s, st) in enumerate(states)
-  for (t, dt) in enumerate(dates)
-    inc = findall((df[!,:state] .== st) .&amp; (df[!,:date] .==dt))
-    @assert length(inc)==1
-    i = inc[1]
-    p = convert(Array, df[i,pvars]) .&lt; dt
-    p[ismissing.(p)] .= false
-    d[:,t,s] .= vcat(p, convert(Array, df[i, dvars]))
-    x[:,t,s] .= vcat(p, convert(Array, df[i, xvars]))
-    m[:,t,s] .= convert(Array, df[i, mvars])./100
-    cc[t,s] = df[i, :cases]
-    if (t&gt;1)
-      cases[t,s] = max(0.0,cc[t,s] - cc[t-1,s])
-    end
-  end
+sdf = copy(df)
+for p in pvars
+  sdf[!,p] = by(sdf, :state, (:date, p) =&gt; x-&gt;(!ismissing(unique(x[p])[1]) .&amp; (x.date .&gt;= unique(x[p])[1]))).x1
 end
+sdf = sort(sdf, [:state, :date])
+sdf[!,:newcases] = by(sdf, :state, newcases = :cases =&gt; x-&gt;(vcat(missing, diff(x))))[!,:newcases]
+sdf[!,:dlogk] = by(sdf, :state, dlogk = :newcases =&gt; x-&gt;(vcat(missing, diff(log.(max.(x,0.1))))))[!,:dlogk]
+
+fmla = FormulaTerm(Term(:dlogk), Tuple(Term.(vcat(pvars,:state))))
+reg = lm(fmla, sdf)
 </code></pre>
 
-<p>Estimation</p>
-<pre><code class="julia">mdl = rt(cases, m, d, x)
-#@time  chain=Turing.sample(mdl, HMC(1e-6, 3), 50);
+<pre><code>StatsModels.TableRegressionModel{LinearModel{GLM.LmResp{Array{Float64,1}},G
+LM.DensePredChol{Float64,LinearAlgebra.Cholesky{Float64,Array{Float64,2}}}}
+,Array{Float64,2}}
 
-#using Turing.Variational
-#q0 = Variational.meanfield(mdl);
-#advi = ADVI(10, 10_000)
-#@time q = vi(mdl, ADVI(10,100), q0, optimizer=Variational.DecayedADAGrad(1e-2, 1.1, 0.9));
-#chain = Turing.sample(mdl, NUTS(500, 0.65, max_depth=4, init_ϵ=1e-4), 1000)
+dlogk ~ 1 + Stay.at.home..shelter.in.place + State.of.emergency + Date.clos
+ed.K.12.schools + Closed.day.cares + Date.banned.visitors.to.nursing.homes 
++ Closed.non.essential.businesses + Closed.restaurants.except.take.out + st
+ate
+
+Coefficients:
+───────────────────────────────────────────────────────────────────────────
+────────────────────────────────
+                                          Estimate  Std. Error     t value 
+ Pr(&gt;|t|)   Lower 95%  Upper 95%
+───────────────────────────────────────────────────────────────────────────
+────────────────────────────────
+(Intercept)                             0.0529389    0.157586    0.335936  
+   0.7369  -0.256012   0.36189
+Stay.at.home..shelter.in.place         -0.144314     0.0951249  -1.5171    
+   0.1293  -0.330808   0.0421806
+State.of.emergency                      0.201502     0.0796784   2.52894   
+   0.0115   0.0452907  0.357713
+Date.closed.K.12.schools                0.254984     0.119152    2.13998   
+   0.0324   0.0213836  0.488585
+Closed.day.cares                        0.0174127    0.105136    0.16562   
+   0.8685  -0.188708   0.223534
+Date.banned.visitors.to.nursing.homes  -0.0604917    0.0866545  -0.69808   
+   0.4852  -0.23038    0.109396
+Closed.non.essential.businesses        -0.0964288    0.105492   -0.914083  
+   0.3607  -0.303249   0.110391
+Closed.restaurants.except.take.out     -0.219336     0.118453   -1.85166   
+   0.0641  -0.451566   0.0128942
+state: Alaska                          -0.0496063    0.22254    -0.222909  
+   0.8236  -0.485901   0.386688
+state: Arizona                         -0.0434971    0.223356   -0.194744  
+   0.8456  -0.48139    0.394396
+state: Arkansas                        -0.0606806    0.220275   -0.275476  
+   0.7830  -0.492535   0.371174
+state: California                       0.0042871    0.226435    0.018933  
+   0.9849  -0.439644   0.448218
+state: Colorado                         0.0507533    0.220848    0.229811  
+   0.8182  -0.382222   0.483729
+state: Connecticut                      0.00916961   0.221573    0.0413841 
+   0.9670  -0.425229   0.443568
+state: Delaware                         0.00813318   0.220916    0.0368157 
+   0.9706  -0.424977   0.441244
+state: District of Columbia            -0.0167856    0.222575   -0.0754153 
+   0.9399  -0.453149   0.419578
+state: Florida                         -0.0068121    0.220828   -0.0308479 
+   0.9754  -0.439751   0.426126
+state: Georgia                         -0.0407344    0.221334   -0.184041  
+   0.8540  -0.474663   0.393195
+state: Hawaii                          -0.0572161    0.221972   -0.257763  
+   0.7966  -0.492396   0.377963
+state: Idaho                           -0.0229171    0.222397   -0.103046  
+   0.9179  -0.458931   0.413097
+state: Illinois                         0.03093      0.220056    0.140555  
+   0.8882  -0.400495   0.462355
+state: Indiana                          0.0136712    0.223046    0.0612934 
+   0.9511  -0.423615   0.450957
+state: Iowa                             0.0207514    0.223136    0.0929985 
+   0.9259  -0.416712   0.458214
+state: Kansas                          -0.121475     0.224995   -0.539901  
+   0.5893  -0.562583   0.319632
+state: Kentucky                        -0.0683194    0.220319   -0.310092  
+   0.7565  -0.50026    0.363621
+state: Louisiana                        0.0425977    0.220898    0.192839  
+   0.8471  -0.390476   0.475672
+state: Maine                            0.0203375    0.222897    0.0912415 
+   0.9273  -0.416657   0.457331
+state: Maryland                        -0.00766971   0.220194   -0.0348316 
+   0.9722  -0.439364   0.424025
+state: Massachusetts                    0.0478969    0.217561    0.220154  
+   0.8258  -0.378635   0.474429
+state: Michigan                         0.0419994    0.217603    0.19301   
+   0.8470  -0.384615   0.468613
+state: Minnesota                        0.00502801   0.222571    0.0225906 
+   0.9820  -0.431326   0.441382
+state: Mississippi                     -0.022601     0.220944   -0.102293  
+   0.9185  -0.455766   0.410564
+state: Missouri                        -0.0981177    0.22235    -0.441277  
+   0.6590  -0.534038   0.337803
+state: Montana                         -0.0311565    0.220451   -0.141331  
+   0.8876  -0.463355   0.401042
+state: Nebraska                        -0.0617624    0.221138   -0.279293  
+   0.7800  -0.495308   0.371783
+state: Nevada                          -0.0104898    0.22267    -0.0471091 
+   0.9624  -0.447039   0.42606
+state: New Hampshire                   -0.00393095   0.22268    -0.0176529 
+   0.9859  -0.4405     0.432638
+state: New Jersey                       0.0392051    0.220002    0.178204  
+   0.8586  -0.392113   0.470523
+state: New Mexico                       0.014529     0.220796    0.0658028 
+   0.9475  -0.418345   0.447403
+state: New York                         0.0728373    0.221018    0.329554  
+   0.7418  -0.360472   0.506147
+state: North Carolina                  -0.0102477    0.222495   -0.0460582 
+   0.9633  -0.446454   0.425959
+state: North Dakota                    -0.153902     0.220993   -0.696413  
+   0.4862  -0.587163   0.279359
+state: Ohio                             0.0381581    0.21777     0.175222  
+   0.8609  -0.388784   0.465101
+state: Oklahoma                        -0.0607225    0.221012   -0.274747  
+   0.7835  -0.494021   0.372576
+state: Oregon                          -0.026091     0.220044   -0.118572  
+   0.9056  -0.457491   0.405309
+state: Pennsylvania                     0.0167631    0.217545    0.0770559 
+   0.9386  -0.409738   0.443264
+state: Rhode Island                     0.0151375    0.217565    0.0695771 
+   0.9445  -0.411402   0.441677
+state: South Carolina                  -0.00775206   0.220141   -0.035214  
+   0.9719  -0.439343   0.423839
+state: South Dakota                    -0.156007     0.224017   -0.696406  
+   0.4862  -0.595197   0.283183
+state: Tennessee                       -0.095601     0.220076   -0.434399  
+   0.6640  -0.527065   0.335863
+state: Texas                            0.0185814    0.220315    0.0843402 
+   0.9328  -0.41335    0.450512
+state: Utah                            -0.0940672    0.222549   -0.422681  
+   0.6725  -0.530378   0.342244
+state: Vermont                         -0.0154339    0.217535   -0.0709487 
+   0.9434  -0.441916   0.411049
+state: Virginia                        -0.0430704    0.223231   -0.192941  
+   0.8470  -0.480719   0.394578
+state: Washington                       0.0141374    0.220979    0.0639764 
+   0.9490  -0.419096   0.447371
+state: West Virginia                   -0.0116897    0.21989    -0.0531618 
+   0.9576  -0.442787   0.419408
+state: Wisconsin                        0.00795341   0.222729    0.0357089 
+   0.9715  -0.428711   0.444618
+state: Wyoming                         -0.104069     0.220599   -0.471758  
+   0.6371  -0.536557   0.328419
+───────────────────────────────────────────────────────────────────────────
+────────────────────────────────
 </code></pre>
-
+<p>From this we get that if we assume $\gamma = 1/7$, then the the baseline
+estimate of $R$ in Illinois is $7(0.053 + 0.03) + 1\approx 1.58$ with a
+stay at home order, $R$ in Illinois becomes
+$7(0.053 + 0.03 - 0.14) + 1 \approx 0.6$.</p>
 <div class="references hanging-indent" id="refs">
 <div id="ref-bettencourt2008">
 <p>Bettencourt, Ruy M., Luís M. A. AND Ribeiro. 2008. “Real Time Bayesian

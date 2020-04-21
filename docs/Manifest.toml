@@ -122,11 +122,6 @@ git-tree-sha1 = "3663bfffede2ef41358b6fc2e1d8a6d50b3c3904"
 uuid = "6e34b625-4abd-537c-b88f-471c36dfa7a0"
 version = "1.0.6+2"
 
-[[CEnum]]
-git-tree-sha1 = "62847acab40e6855a9b5905ccb99c2b5cf6b3ebb"
-uuid = "fa961155-64e5-5f13-b03f-caf6b980ea82"
-version = "0.2.0"
-
 [[CSV]]
 deps = ["CategoricalArrays", "DataFrames", "Dates", "FilePathsBase", "Mmap", "Parsers", "PooledArrays", "Tables", "Unicode", "WeakRefStrings"]
 git-tree-sha1 = "8fe77a5478781d59a9ba17f0ac47dda2be5f8ae7"

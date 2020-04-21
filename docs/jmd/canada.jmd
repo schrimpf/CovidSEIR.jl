@@ -16,17 +16,17 @@ options:
 
 This work is licensed under a [Creative Commons Attribution-ShareAlike
 4.0 International
-License](http://creativecommons.org/licenses/by-sa/4.0/) 
+License](http://creativecommons.org/licenses/by-sa/4.0/)
 
 
 ```julia
-using CovidSEIR,  Plots, DataFrames, JLD2, StatsPlots
+using CovidSEIR,  Plots, DataFrames, JLD2, StatsPlots, MCMCChains
 Plots.pyplot()
 jmddir = normpath(joinpath(dirname(Base.find_package("CovidSEIR")),"..","docs","jmd"))
 covdf = covidjhudata();
 ```
 
-# Canada 
+# Canada
 
 We estimate the model with the following code. It takes about an hour.
 
@@ -43,7 +43,8 @@ JLD2.@save "$jmddir/canada_$(Dates.today()).jld2" cc
 ```
 
 ```julia
-JLD2.@load "$jmddir/canada_tv_2020-04-03.jld2" cc dayt0;
+JLD2.@load "$jmddir/canada_dhmc_2020-04-13.jld2" cc dayt0;
+cc = MCMCChains.Chains(collect(cc.value.data), replace.(cc.name_map.parameters, r"([^\[])([1-9])" => s"\1[\2]"))
 ```
 
 ## Estimates
@@ -59,7 +60,7 @@ differences between the four chains for some parameters.
 describe(cc)
 ```
 
-The parameter estimates are generally not very precise. 
+The parameter estimates are generally not very precise.
 
 
 ## Fit
@@ -72,12 +73,12 @@ f.fit
 
 In this figure, solid lines are observed data, dashed lines are
 posterior means, and the shaded region is a pointwise 90\% credible
-interval. 
+interval.
 
 
 ## Implications
 
-We now look at the model's projections for some observed and unobserved variables. 
+We now look at the model's projections for some observed and unobserved variables.
 
 ```julia
 for fig in f.trajectories
@@ -88,4 +89,4 @@ end
 In general we see a similar pattern as noted above: the posteriors for
 observed variables are fairly precise. However, the posteriors for
 unobserved variables, such as the portion of undetected infections and
-the portion of mild infections, are very imprecise. 
+the portion of mild infections, are very imprecise.

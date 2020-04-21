@@ -85,12 +85,12 @@ defaultpriors() = Dict(
   "ρ[2]" => truncated(Normal(30, 30), 0, 100) #, # time of reduction
   #"ρ[3]" => truncated(Normal(-0.5, 2), -Inf, 0) # speed of reduction
 )
-  
+
 
 """
      countrymodel(data::CountryData, priors=defaultcountrypriors(),
                   ::Type{R}=Float64) where {R <: Real} = begni
-    
+
 Returns Turing model for single country
 """
 function countrymodel(data::CountryData, priors=defaultpriors())
@@ -114,7 +114,7 @@ begin
       priors[k] = def[k]
     end
   end
-  a ~ priors["a"] 
+  a ~ priors["a"]
   for i in 1:L
     p[i] ~ priors["p[$i]"]
     γ[i] ~ priors["γ[$i]"]
@@ -129,7 +129,7 @@ begin
   sigD  ~ priors["sigD"]
   sigC ~ priors["sigC"]
   sigRc ~ priors["sigRc"]
-  
+
   # setup ODE
   E0 = pE0*population
   S0 =population*(1-pE0)

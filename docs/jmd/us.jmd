@@ -16,11 +16,11 @@ options:
 
 This work is licensed under a [Creative Commons Attribution-ShareAlike
 4.0 International
-License](http://creativecommons.org/licenses/by-sa/4.0/) 
+License](http://creativecommons.org/licenses/by-sa/4.0/)
 
 
 ```julia
-using CovidSEIR,  Plots, DataFrames, JLD2, StatsPlots, Dates
+using CovidSEIR,  Plots, DataFrames, JLD2, StatsPlots, Dates, MCMCChains
 Plots.pyplot()
 jmddir = normpath(joinpath(dirname(Base.find_package("CovidSEIR")),"..","docs","jmd"))
 covdf = covidjhudata();
@@ -40,7 +40,8 @@ import JLD2
 JLD2.@save "$jmddir/us_tv_$(Dates.today()).jld2" cc
 ```
 ```julia
-JLD2.@load "$jmddir/us_tv_2020-04-03.jld2" cc;
+JLD2.@load "$jmddir/us_dhmc_2020-04-13.jld2" cc;
+cc = MCMCChains.Chains(collect(cc.value.data), replace.(cc.name_map.parameters, r"([^\[])([1-9])" => s"\1[\2]"))
 ```
 
 ## Estimates
@@ -68,5 +69,3 @@ for fig in f.trajectories
   display(plot(fig))
 end
 ```
-
-

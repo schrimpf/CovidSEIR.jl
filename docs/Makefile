@@ -1,7 +1,7 @@
 BIB = jmd/covid.bib
-PANDOC = pandoc --bibliography $(BIB) -f markdown -t markdown_mmd-citations --metadata link-citations=true 
+PANDOC = pandoc --bibliography $(BIB) -f markdown -t markdown_mmd-citations --metadata link-citations=true
 
-WEAVE = julia --project=@. makeweave.jl 
+WEAVE = julia --project=@. makeweave.jl
 vpath %.jmd jmd
 
 
@@ -13,22 +13,22 @@ docin := $(wildcard src/*.md)
 docout := $(patsubst src/%.md, build/%.md,$(docin))
 
 
-mdout := $(jmdout) 
+mdout := $(jmdout)
 nbout := $(patsubst jmd/%.jmd, build/%.ipynb,$(jmdin))
 
 
-jmd : $(jmdout) 
+jmd : $(jmdout)
 nb : $(nbout)
 doc: $(docout)
 
 
-$(jmdmd) : md/%.md : %.jmd #makeweave.jl 
+$(jmdmd) : md/%.md : %.jmd #makeweave.jl
 	$(WEAVE) $? weave
 
 $(mdout) : build/%.md : md/%.md
 	$(PANDOC) $< -o $@
 
-$(nbout) : build/%.ipynb : %.jmd 
+$(nbout) : build/%.ipynb : %.jmd
 	$(WEAVE) $^  notebook
 
 $(docout) : build/%.md :  src/%.md
@@ -41,14 +41,15 @@ site/index.html: $(rmdout) $(jmdout) $(docout) mkdocs.yml build/figures
 
 all: site/index.html #$(nbout)
 
-deploy: site/index.html 
+deploy: site/index.html
 	mkdocs gh-deploy
 
 
 estpref = canada china italy korea us
+#estpref = china italy korea us
 estnew := $(patsubst %, %_tv_$(shell date +'%Y-%m.%d').jld2, $(estpref))
 
-$(estnew): 
-	julia --project=@. estimate.jl $@
+$(estnew):
+	julia --project=@. estimate_dhmc.jl $@
 
 estimate: $(estnew)

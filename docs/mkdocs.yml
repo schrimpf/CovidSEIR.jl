@@ -43,6 +43,7 @@ nav:
       - South Korea: korea.md
       - China: china.md
       - United States: us.md
+    - US States : state.md
+    - Reproductive number: Rt.md
   - About:
     - License: license.md
-    

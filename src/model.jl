@@ -46,42 +46,6 @@ function odeSEIR()
   return(prob)
 end
 
-struct CountryData{T <: Real, I<:Number}
-  population::T
-  time::Vector{I}
-  dead::Vector{T}
-  recovered::Vector{T}
-  active::Vector{T}
-end
-
-function CountryData(df::DataFrames.AbstractDataFrame, country::String, tstart=1)
-  ss = (df.Country .== country)
-  dead, conf, reco = if sum(ss .& .!ismissing.(df.Province))>0
-    inc = ss .& .!ismissing.(df.Province)
-    dead=DataFrames.by(df[inc, :], [:Country, :Date], :deaths => sum).deaths_sum
-    conf=DataFrames.by(df[inc, :], [:Country, :Date], :confirmed => sum).confirmed_sum
-    reco=DataFrames.by(df[inc, :], [:Country, :Date], :recovered => sum).recovered_sum
-    dead, conf, reco
-  else
-    fill(missing, sum(ss)), fill(missing, sum(ss)), fill(missing, sum(ss))
-  end
-  if any(ismissing.(dead))
-    dead = df[ss .& ismissing.(df.Province),:deaths]
-  end
-  if any(ismissing.(conf))
-    conf = df[ss .& ismissing.(df.Province),:confirmed]
-  end
-  if any(ismissing.(reco))
-    reco = df[ss .& ismissing.(df.Province),:recovered]
-  end
-  @assert length(dead)==length(conf)
-  @assert length(dead)==length(reco)
-  tvals = collect(tstart:(tstart+length(dead)-1))
-  pop = unique(df[ss,:cpop])
-  @assert length(pop)==1
-  return(CountryData(Float64(pop[1]), tvals, Float64.(dead),
-                     Float64.(reco), Float64.(conf-dead-reco)))
-end
 
 defaultcountrypriors() = Dict(
   "a" => truncated(Normal(1/5, 3), 1/14, 1.0), # 1/incubation period
@@ -95,12 +59,12 @@ defaultcountrypriors() = Dict(
   "pE0" => truncated(Normal(0.001, 0.1), 0, 1),
   "sigD" => InverseGamma(2,3),
   "sigC" => InverseGamma(2,3),
-  "sigRc" => InverseGamma(2,3))  
+  "sigRc" => InverseGamma(2,3))
 
 """
      countrymodel(data::CountryData, priors=defaultcountrypriors(),
                   ::Type{R}=Float64) where {R <: Real} = begni
-    
+
 Returns Turing model for single country
 """
 function countrymodel(data::CountryData, priors=defaultcountrypriors())
@@ -123,7 +87,7 @@ begin
       priors[k] = def[k]
     end
   end
-  a ~ priors["a"] 
+  a ~ priors["a"]
   for i in 1:L
     p[i] ~ priors["p[$i]"]
     γ[i] ~ priors["γ[$i]"]
@@ -147,7 +111,7 @@ begin
   u0 = systemvec(S0,E0, I0, C0, R0, X0, Rc0)
   param = paramvec(β./population, γ, p, τ, a)
   probc = remake(ode, tspan = (0.0, Float64(maximum(time))),u0=u0, p=param)
-  sol = concrete_solve(probc, Tsit5(), u0, param; saveat=time) 
+  sol = concrete_solve(probc, Tsit5(), u0, param; saveat=time)
 
   if dead===missing
     dead = Vector{R}(undef, length(time))
@@ -190,7 +154,7 @@ function priorreport(priors=defaultcountrypriors(), T=100, population=1e7;
   fig = Vector{typeof(plot())}(undef, length(all))
   draws = 1000
   for i in 1:length(all)
-    fig[i] = plot(1:T, toplot(d)[i], alpha=alpha, legend=false, color=colors[i])                
+    fig[i] = plot(1:T, toplot(d)[i], alpha=alpha, legend=false, color=colors[i])
   end
   for s in 2:draws
   d = sim()
@@ -199,19 +163,19 @@ function priorreport(priors=defaultcountrypriors(), T=100, population=1e7;
       fig[i]=plot!(fig[i], 1:T, toplot(d)[i], alpha=alpha, legend=false, color=colors[i])
     end
   end
-  
+
   q(p) = map(d->mapslices(x->quantile(x, p),d, dims=2), all)
   lo =q(0.05)
   hi = q(0.95)
-  
+
   for i in 1:length(all)
-    fig[i]=plot!(fig[i], 1:T, mean(all[i], dims=2), alpha=1, 
+    fig[i]=plot!(fig[i], 1:T, mean(all[i], dims=2), alpha=1,
                  color=colors[i], linewidth=3, linecolor=:black, ribbon=(mean(all[i],dims=2).-lo[i],
                                                        hi[i] .- mean(all[i],dims=2)), fillalpha=0.3)
   end
   plot!(fig[3], xlabel="Days")
   plot!(fig[2], ylabel="Portion of population")
-  
+
   combofig=plot(fig..., title=["Active Confirmed Cases" "Recoveries" "Deaths"], link=:x, layout=(3,1))
 
 
@@ -225,7 +189,7 @@ function priorreport(priors=defaultcountrypriors(), T=100, population=1e7;
                                                   q50 = [Statistics.quantile(x, 0.5)],
                                                   q95 = [Statistics.quantile(x, 0.95)]))
   end
-  DataFrames.sort!(tbl, :parameter)     
+  DataFrames.sort!(tbl, :parameter)
   return(all=combofig, figs=fig, tbl=tbl)
 end
 
@@ -269,7 +233,7 @@ function simtrajectories(cc::AbstractMCMC.AbstractChains,
     ndf = DataFrames.DataFrame(:iter=>i, :chain=>c, :t=>ts)
     for (v, x) in zip(devars, eachcol(X))
       ndf[!,v] = x
-    end    
+    end
     n = size(ndf,1)
     ndf[!,:dead] = ndf[!,:X] .+ randn(n)*sigD
     ndf[!, :active] = ndf[!, :C1] .+ ndf[!, :C2] .+ randn(n)*sigC
@@ -303,7 +267,7 @@ function plotvars(df::DataFrames.AbstractDataFrame,
   df[!,:tcfr] = df.dead./(df.active+df.recovered+df.dead+df.Rc+df.I)
   df[!,:pundect] = df.I./(df.C1+df.C2+df.I)
   df[!,:pmild] = df.C1./(df.C1+df.C2)
-  df[!,:tpmild] = (df.I+df.C1)./(df.C1+df.C2+df.I)  
+  df[!,:tpmild] = (df.I+df.C1)./(df.C1+df.C2+df.I)
   adf = DataFrames.aggregate(DataFrames.groupby(df, :t), [mean, std, x->quantile(x, 0.05), x->quantile(x, 0.95)])
   adf[!,:date] = dayt0 .+ Dates.Day.(adf.t)
   minval = 0.1 # so log scales don't get log(0)
@@ -317,9 +281,9 @@ function plotvars(df::DataFrames.AbstractDataFrame,
   fit=plot!(fit,adf.date, meanpred, ribbon=(meanpred-q5,q95-meanpred), fillalpha=0.2, label=nothing,
             linestyle=:dash, xlim=Dates.value.(daylim), color=colors[1:3]',
             xrotation=25,
-            ylims=(minval, maximum(data.active)*1.2),           
+            ylims=(minval, maximum(data.active)*1.2),
             yscale=:identity)
-  
+
   # plots of trajectories
   vars = [ :S => "susceptible",
            :E => "exposed",
@@ -338,7 +302,7 @@ function plotvars(df::DataFrames.AbstractDataFrame,
   tfigs = Vector{typeof(fit)}(undef, 0)
   daylim = (Dates.today() - Dates.Day(21), Dates.today() + Dates.Day(60))
   c = 1
-  for v in vars    
+  for v in vars
     meanpred, q5, q95 = varmatrix(adf,[String(v[1])], x->x)
     fig = plot(adf.date, meanpred, title=v[2], ribbon=(meanpred-q5, q95-meanpred),
                legend=false, xlim=Dates.value.(daylim), xrotation=25, color=colors[c])
@@ -349,6 +313,6 @@ function plotvars(df::DataFrames.AbstractDataFrame,
     end
     push!(tfigs, fig)
     c = mod(c, length(colors)) + 1
-  end  
+  end
   return(fit=fit, trajectories=tfigs)
 end

@@ -14,7 +14,9 @@ include("data.jl")
 include("model.jl")
 include("timevarying.jl")
 include("leastsquares.jl")
-       
+include("dynamichmc_interface.jl")
+include("multiregion.jl")
+
 export covidjhudata,
   CountryData,
   countrymodel,

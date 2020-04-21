@@ -16,11 +16,11 @@ options:
 
 This work is licensed under a [Creative Commons Attribution-ShareAlike
 4.0 International
-License](http://creativecommons.org/licenses/by-sa/4.0/) 
+License](http://creativecommons.org/licenses/by-sa/4.0/)
 
 
 ```julia
-using CovidSEIR,  Plots, DataFrames, JLD2, StatsPlots
+using CovidSEIR,  Plots, DataFrames, JLD2, StatsPlots, MCMCChains
 Plots.pyplot()
 jmddir = normpath(joinpath(dirname(Base.find_package("CovidSEIR")),"..","docs","jmd"))
 covdf = covidjhudata();
@@ -30,8 +30,8 @@ covdf = covidjhudata();
 
 ```julia
 using Dates
-dayt0 = Dates.Date("2020-01-22") - Dates.Day(1)
-china = CountryData(covdf, "China", 1)
+dayt0 = Dates.Date("2020-01-22") - Dates.Day(65)
+china = CountryData(covdf, "China", 65)
 ```
 
 ```julia; eval=false
@@ -42,8 +42,8 @@ import JLD2
 JLD2.@save "$jmddir/china_$(Dates.today()).jld2" cc dayt0
 ```
 ```julia
-JLD2.@load "$jmddir/china_tv_2020-04-03.jld2" cc dayt0;
-cc = cc[:,:,1]
+JLD2.@load "$jmddir/china_dhmc_2020-04-13.jld2" cc dayt0;
+cc = MCMCChains.Chains(collect(cc.value.data), replace.(cc.name_map.parameters, r"([^\[])([1-9])" => s"\1[\2]"))
 ```
 
 ## Estimates
@@ -71,5 +71,3 @@ for fig in f.trajectories
   display(plot(fig, xlim=nothing))
 end
 ```
-
-

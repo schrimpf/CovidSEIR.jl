@@ -151,6 +151,11 @@
             </li>
               </ul>
             </li>
+            
+            <li class="nav-item" data-level="1"><a href="#code_1" class="nav-link">Code</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
         </ul>
     </div>
 </div></div>
@@ -263,6 +268,250 @@ compute $P(R_t | k_0, k_1, &hellip;, k_T)$.</p>
 some way to recast the random walk assumption as a Gaussian process
 prior (the kernel would be $\kappa(t,t&rsquo;) = \min{t,t&rsquo;} \sigma^2$), but
 that seems to me like an unusual way to describe it.</p>
+<h3 id="code">Code<a class="headerlink" href="#code" title="Permanent link">&para;</a></h3>
+<p>Let’s see how Systrom’s method works.</p>
+<p>First the load data.</p>
+<pre><code class="julia">using DataFrames, Plots, StatsPlots, CovidSEIR
+Plots.pyplot()
+
+df = CovidSEIR.statedata()
+df = filter(x-&gt;x.fips&lt;60, df)
+# focus on 10 states with most cases as of April 1, 2020
+sdf = select(df[df[!,:date].==Dates.Date(&quot;2020-04-01&quot;),:], :cases, :state) |&gt;
+    x-&gt;sort(x,:cases, rev=true)
+states=sdf[1:10,:state]
+sdf = select(filter(r-&gt;r[:state] ∈ states, df), :cases, :state, :date)
+sdf = sort(sdf, [:state, :date])
+sdf[!,:newcases] = by(sdf, :state, newcases = :cases =&gt; x-&gt;(vcat(missing, diff(x))))[!,:newcases]
+
+figs = []
+for gdf in groupby(sdf, :state)
+  @show unique(gdf.state)
+  f = @df gdf plot(:date, :newcases, legend=:none, linewidth=2, title=unique(gdf.state)[1])
+  global figs = vcat(figs,f)
+end
+</code></pre>
+
+<pre><code>unique(gdf.state) = ["California"]
+unique(gdf.state) = ["Florida"]
+unique(gdf.state) = ["Illinois"]
+unique(gdf.state) = ["Louisiana"]
+unique(gdf.state) = ["Massachusetts"]
+unique(gdf.state) = ["Michigan"]
+unique(gdf.state) = ["New Jersey"]
+unique(gdf.state) = ["New York"]
+unique(gdf.state) = ["Pennsylvania"]
+unique(gdf.state) = ["Washington"]
+</code></pre>
+<pre><code class="julia">display(plot(figs[1:9]..., layout=(3,3)))
+</code></pre>
+
+<p><img alt="" src="../figures/Rt_1_1.png" /></p>
+<p>From this we can see that new cases are very noisy. This is especially
+problematic when cases jump from near 0 to very high values, such as in
+Illinois. The median value of and variance of new cases, $k_t$, are both
+$k_{t-1} e^{\gamma(R_t - 1)}$. Only huge changes in $R_t$ can
+rationalize huge jumps in new cases.</p>
+<p>Let’s compute posteriors for each state.</p>
+<pre><code class="julia">using Interpolations, Distributions
+
+function rtpost(cases, γ, σ, prior0, casepdf)
+  (rgrid, postgrid, ll) = rtpostgrid(cases)(γ, σ, prior0, casepdf)
+  w = rgrid[2] - rgrid[1]
+  T = length(cases)
+  p = [LinearInterpolation(rgrid, postgrid[:,t]) for t in 1:T]
+  coverage = 0.9
+  cr = zeros(T,2)
+  mu = vec(rgrid' * postgrid*w)
+  for t in 1:T
+    l = findfirst(cumsum(postgrid[:,t].*w).&gt;(1-coverage)/2)
+    h = findlast(cumsum(postgrid[:,t].*w).&lt;(1-(1-coverage)/2))
+    if !(l === nothing || h === nothing)
+      cr[t,:] = [rgrid[l], rgrid[h]]
+    end
+  end
+  return(p, mu, cr)
+end
+
+function rtpostgrid(cases)
+  # We'll compute the posterior on these values of R_t
+  rlo = 0
+  rhi = 8
+  steps = 500
+  rgrid = range(rlo, rhi, length=steps)
+  Δgrid = range(0.05, 0.95, length=10)
+  w = rgrid[2] - rgrid[1]
+  dr = rgrid .- rgrid'
+  fn=function(γ, σ, prior0, casepdf)
+    prr = pdf.(Normal(0,σ), dr) # P(r_{t+1} | r_t)
+    for i in 1:size(prr,1)
+      prr[i, : ] ./= sum(prr[i,:].*w)
+    end
+    postgrid = Matrix{typeof(σ)}(undef,length(rgrid), length(cases)) # P(R_t | k_t, k_{t-1},...)
+    like = similar(postgrid, length(cases))
+    for t in 1:length(cases)
+      if (t==1)
+        postgrid[:,t] .= prior0.(rgrid)
+      else
+        if (cases[t-1]===missing || cases[t]===missing)
+          pkr = 1  # P(k_t | R_t)
+        else
+          λ = max(cases[t-1],1).* exp.(γ .* (rgrid .- 1))
+          #r = λ*nbp/(1-nbp)
+          #pkr = pdf.(NegativeBinomial.(r,nbp), cases[t])
+          pkr = casepdf.(λ, cases[t])
+          if (all(pkr.==0))
+            @warn &quot;all pkr=0&quot;
+            @show t, cases[t], cases[t-1]
+            pkr .= 1
+          end
+        end
+        postgrid[:,t] = pkr.*(prr*postgrid[:,t-1])
+        like[t] = sum(postgrid[:,t].*w)
+        postgrid[:,t] ./= max(like[t], 1e-15)
+      end
+    end
+    ll = try
+      sum(log.(like))
+    catch
+      -710*length(like)
+    end
+    return((rgrid, postgrid, ll))
+  end
+  return(fn)
+end
+
+for σ in [0.1, 0.25, 1]
+  γ =1/7
+  nbp = 0.01
+  figs = []
+  for gdf in groupby(sdf, :state)
+    p, m, cr = rtpost(gdf.newcases, γ, σ, x-&gt;pdf(truncated(Gamma(4,1),0,8), x),
+                      (λ,x)-&gt;pdf(Poisson(λ),x))
+    f = plot(gdf.date, m, ribbon=(m-cr[:,1], cr[:,2] - m), title=unique(gdf.state)[1], legend=:none, ylabel=&quot;Rₜ&quot;)
+    f = hline!(f,[1.0])
+    figs = vcat(figs, f)
+  end
+  l = @layout [a{.1h};grid(1,1)]
+  display(plot(plot(annotation=(0.5,0.5, &quot;Poisson &amp; σ=$σ&quot;), framestyle = :none),
+               plot(figs[1:9]..., layout=(3,3)), layout=l))
+end
+</code></pre>
+
+<pre><code>(t, cases[t], cases[t - 1]) = (72, 2052, 215)
+(t, cases[t], cases[t - 1]) = (77, 9, 1003)
+(t, cases[t], cases[t - 1]) = (78, 2807, 9)
+(t, cases[t], cases[t - 1]) = (79, 1, 2807)
+(t, cases[t], cases[t - 1]) = (80, 2808, 1)
+(t, cases[t], cases[t - 1]) = (55, 352, 2)
+(t, cases[t], cases[t - 1]) = (54, -39, 74)
+(t, cases[t], cases[t - 1]) = (72, 2052, 215)
+(t, cases[t], cases[t - 1]) = (77, 9, 1003)
+(t, cases[t], cases[t - 1]) = (78, 2807, 9)
+(t, cases[t], cases[t - 1]) = (79, 1, 2807)
+(t, cases[t], cases[t - 1]) = (80, 2808, 1)
+(t, cases[t], cases[t - 1]) = (55, 352, 2)
+(t, cases[t], cases[t - 1]) = (54, -39, 74)
+(t, cases[t], cases[t - 1]) = (72, 2052, 215)
+(t, cases[t], cases[t - 1]) = (77, 9, 1003)
+(t, cases[t], cases[t - 1]) = (78, 2807, 9)
+(t, cases[t], cases[t - 1]) = (79, 1, 2807)
+(t, cases[t], cases[t - 1]) = (80, 2808, 1)
+(t, cases[t], cases[t - 1]) = (55, 352, 2)
+(t, cases[t], cases[t - 1]) = (54, -39, 74)
+</code></pre>
+<p><img alt="" src="../figures/Rt_2_1.png" /> <img alt="" src="../figures/Rt_2_2.png" /> <img alt="" src="../figures/Rt_2_3.png" /></p>
+<p>In these results, what is happening is that when new cases fluctuate too
+much, the likelihood is identically 0, causing the posterior calculation
+to break down. Increasing the variance of changes in $R_t$, widens the
+posterior confidence intervals, but does not solve the problem of
+vanishing likelihoods.</p>
+<p>One thing that can “solve” the problem is choosing a distribution of
+$k_t | \lambda, k_{t-1}$ with higher variance. The negative binomial
+with parameters $\lambda p/(1-p)$ and $p$ has mean $\lambda$ and
+variance $\lambda/p$.</p>
+<pre><code class="julia">γ =1/7
+σ = 0.25
+
+Plots.closeall()
+for σ in [0.1, 0.25, 0.5]
+  for nbp in [0.5, 0.1, 0.01]
+    figs = []
+    for gdf in groupby(sdf, :state)
+      p, m, cr = rtpost(gdf.newcases, γ, σ, x-&gt;pdf(truncated(Gamma(4,1),0,8), x),
+                      (λ,x)-&gt;pdf(NegativeBinomial(λ*nbp/(1-nbp), nbp),x));
+      f = plot(gdf.date, m, ribbon=(m-cr[:,1], cr[:,2] - m), title=unique(gdf.state)[1], legend=:none, ylabel=&quot;Rₜ&quot;)
+      f = hline!(f,[1.0])
+      figs = vcat(figs, f)
+    end
+    l = @layout [a{.1h};grid(1,1)]
+    display(plot(plot(annotation=(0.5,0.5, &quot;Negative binomial, p=$nbp, &amp; σ=$σ&quot;), framestyle = :none),
+                 plot(figs[1:9]..., layout=(3,3)), layout=l, reuse=false))
+  end
+end
+</code></pre>
+
+<pre><code>(t, cases[t], cases[t - 1]) = (78, 2807, 9)
+(t, cases[t], cases[t - 1]) = (79, 1, 2807)
+(t, cases[t], cases[t - 1]) = (80, 2808, 1)
+(t, cases[t], cases[t - 1]) = (54, -39, 74)
+(t, cases[t], cases[t - 1]) = (54, -39, 74)
+(t, cases[t], cases[t - 1]) = (54, -39, 74)
+(t, cases[t], cases[t - 1]) = (78, 2807, 9)
+(t, cases[t], cases[t - 1]) = (79, 1, 2807)
+(t, cases[t], cases[t - 1]) = (80, 2808, 1)
+(t, cases[t], cases[t - 1]) = (54, -39, 74)
+(t, cases[t], cases[t - 1]) = (54, -39, 74)
+(t, cases[t], cases[t - 1]) = (54, -39, 74)
+(t, cases[t], cases[t - 1]) = (78, 2807, 9)
+(t, cases[t], cases[t - 1]) = (79, 1, 2807)
+(t, cases[t], cases[t - 1]) = (80, 2808, 1)
+(t, cases[t], cases[t - 1]) = (54, -39, 74)
+(t, cases[t], cases[t - 1]) = (54, -39, 74)
+(t, cases[t], cases[t - 1]) = (54, -39, 74)
+</code></pre>
+<p><img alt="" src="../figures/Rt_3_1.png" /> <img alt="" src="../figures/Rt_3_2.png" /> <img alt="" src="../figures/Rt_3_3.png" />
+<img alt="" src="../figures/Rt_3_4.png" /> <img alt="" src="../figures/Rt_3_5.png" /> <img alt="" src="../figures/Rt_3_6.png" />
+<img alt="" src="../figures/Rt_3_7.png" /> <img alt="" src="../figures/Rt_3_8.png" /> <img alt="" src="../figures/Rt_3_9.png" /></p>
+<p>What Systrom did was smooth the new cases before using the Poisson
+distribution. He used a window width of $7$ and Gaussian weights with
+standard deviation $2$.</p>
+<pre><code class="julia">using RollingFunctions
+σ = 0.25
+Plots.closeall()
+for w in [3, 7, 11]
+  for s in [0.5, 2, 4]
+    γ =1/7
+    nbp = 0.01
+    figs = []
+    for gdf in groupby(sdf, :state)
+      windowsize = w
+      weights = pdf(Normal(0, s), -floor(windowsize/2):floor(windowsize/2))
+      weights = weights/sum(weights)
+      smoothcases = Int.(round.(runmean(gdf.newcases[2:end], windowsize, weights*windowsize)))
+      p, m, cr = rtpost(smoothcases, γ, σ, x-&gt;pdf(truncated(Gamma(4,1),0,8), x),
+                        (λ,x)-&gt;pdf(Poisson(λ),x))
+      f = plot(gdf.date, m, ribbon=(m-cr[:,1], cr[:,2] - m), title=unique(gdf.state)[1], legend=:none, ylabel=&quot;Rₜ&quot;)
+      f = hline!(f,[1.0])
+      figs = vcat(figs, f)
+    end
+    l = @layout [a{.1h};grid(1,1)]
+    display(plot(plot(annotation=(0.5,0.5, &quot;Poisson &amp; σ=$σ, s=$s, w=$w&quot;), framestyle = :none),
+                 plot(figs[1:9]..., layout=(3,3)), layout=l, reuse=false))
+  end
+end
+</code></pre>
+
+<pre><code>(t, cases[t], cases[t - 1]) = (54, -4, 68)
+(t, cases[t], cases[t - 1]) = (56, -4, 68)
+(t, cases[t], cases[t - 1]) = (58, -4, 68)
+</code></pre>
+<p><img alt="" src="../figures/Rt_4_1.png" /> <img alt="" src="../figures/Rt_4_2.png" /> <img alt="" src="../figures/Rt_4_3.png" />
+<img alt="" src="../figures/Rt_4_4.png" /> <img alt="" src="../figures/Rt_4_5.png" /> <img alt="" src="../figures/Rt_4_6.png" />
+<img alt="" src="../figures/Rt_4_7.png" /> <img alt="" src="../figures/Rt_4_8.png" /> <img alt="" src="../figures/Rt_4_9.png" /></p>
+<p>Here we see that we can get a variety of results depending on the
+smoothing used. All of these posteriors ignore the uncertainty in the
+choice of smoothing parameters (and procedure).</p>
 <h2 id="an-alternative-approach">An alternative approach<a class="headerlink" href="#an-alternative-approach" title="Permanent link">&para;</a></h2>
 <p>Here we follow an approach similar in spirit to Systrom, with a few
 additions. First, we utilize data on movement and business operations as
@@ -311,6 +560,121 @@ $d_{st}$ and cases $k_{st}$.</p>
 </div>
 <p>The parameters $\gamma$, $\alpha$, $\lambda$, $\sigma$, and $\Sigma_m$
 are assumed to be common across states.</p>
+<h1 id="code_1">Code<a class="headerlink" href="#code_1" title="Permanent link">&para;</a></h1>
+<p>The model</p>
+<pre><code class="julia">using Turing, CovidSEIR, Plots, PrettyTables, Dates
+using LinearAlgebra: dot, diagm, Symmetric, I
+
+@model rt(cases, m, d, x, ::Type{Rtype}=Float64) where {Rtype &lt;: Real} = begin
+  # Priors
+  γ ~ truncated(Normal(1/7, 1/2), 1/21, 1/3)
+  σ ~ truncated(Normal(0.25,1), 1e-6, Inf)
+  meanR0 ~ truncated(Normal(3, 2), 0, Inf)
+  sigR0 ~ truncated(Normal(1,1), 1e-2, Inf)
+  αR ~ truncated(Normal(0.5, 2), -0.9, 0.9)
+  α ~ MvNormal(zeros(size(d, 1)), 1.0)
+  λR ~ MvNormal(zeros(size(m, 1)), 1.0)
+  λ ~ MvNormal(zeros(size(m,1)*size(x,1)), 1.0)
+  λ = reshape(λ, size(m,1), size(x,1))
+  J = size(m,1)
+  #Cm ~ LKJ(J, 2.0)
+  #m = diagm(ones(J))
+  sm ~ MvNormal(zeros(J), 1)
+  Σm = diagm(exp.(sm)) + I*1e-4
+  #Σm = Cm.*(exp.(sm)*exp.(sm)')
+  #Σm ~ Wishart(J+2, diagm(ones(J))*1/(2*0.001))
+  if (cases === missing) # for simulating the model
+    cases = Matrix{Rtype}(undef, T, S)
+  end
+  J, T, S = size(m)
+  @assert (T,S) == size(cases)
+  @assert size(x,2) == T &amp;&amp; size(d,2) == T
+  @assert size(x,3) == S &amp;&amp; size(d,3) == S
+  R = Matrix{Rtype}(undef, T, S)
+  e = Matrix{Rtype}(undef, T, S)
+  for s in 1:S
+    R[1,s] = meanR0
+    e[1,s] ~ Normal(0, sigR0)
+    for t in 2:T
+      e[t,s] ~ Normal(αR*e[t-1,s], σ)
+      R[t,s] = e[t,s] + dot(α, d[:,t,s])
+      #R[t,s] ~ truncated(Normal(αR*R[t-1,s] + dot(α,d[:,t,s]), σ), 0, 20)
+      if (t&gt;2) # cases[1,s] is missing because cases is the diff of cumulative cases
+        meank = max(cases[t-1, s], 1e-1)*exp(γ*(R[t,s]-1))
+        #@show t, meank, cases[t-1,s], R[t,s], meanR0, sigR0, αR
+        cases[t, s] ~ Poisson(meank)
+        #cases[t,s] ~ truncated(Normal(meank, meank), 0, Inf)
+      end
+      if !any(ismissing.(m[:,t,s]))
+        m[:,t,s] ~ MvNormal(λR*R[t,s] + λ*x[:,t,s],  Symmetric(Σm))
+      end
+    end
+  end
+  return(cases, R) # return only matters when simulating model
+end
+</code></pre>
+
+<p>Prepare the data.</p>
+<pre><code class="julia">df = CovidSEIR.statedata()
+df = df[df[!,:fips].&lt;60,:] # get ride of non-states (AS, GU, etc)
+
+df[!, :weekend] = 1*(Dates.dayofweek.(df[!,:date]) .&gt;= 6)
+pvars = [Symbol(&quot;Stay.at.home..shelter.in.place&quot;),
+         Symbol(&quot;State.of.emergency&quot;),
+         Symbol(&quot;Date.closed.K.12.schools&quot;),
+         #Symbol(&quot;Closed.day.cares&quot;),
+         #Symbol(&quot;Date.banned.visitors.to.nursing.homes&quot;),
+         Symbol(&quot;Closed.non.essential.businesses&quot;),
+         Symbol(&quot;Closed.restaurants.except.take.out&quot;)]
+dvars=  [:weekend]
+mvars =  [:retail_and_recreation_percent_change_from_baseline,
+          :grocery_and_pharmacy_percent_change_from_baseline,
+          #:parks_percent_change_from_baseline,
+          #:transit_stations_percent_change_from_baseline,
+          #:workplaces_percent_change_from_baseline,
+          #:residential_percent_change_from_baseline,
+          #:percentchangehours,
+          :percentchangebusinesses]
+xvars = dvars
+
+states = unique(df[!,:state])
+dates = sort(unique(df[!,:date]))
+S = length(states)
+T = length(dates)
+d = Array{Float64,3}(undef, length(dvars) + length(pvars), T, S)
+x = Array{Float64,3}(undef, length(xvars) + length(pvars), T, S)
+m = Array{Union{Missing,Float64},3}(missing, length(mvars), T, S)
+cc = Matrix{Union{Missing,Float64}}(missing, T,S)
+cases = Matrix{Union{Missing,Float64}}(missing, T,S)
+for (s, st) in enumerate(states)
+  for (t, dt) in enumerate(dates)
+    inc = findall((df[!,:state] .== st) .&amp; (df[!,:date] .==dt))
+    @assert length(inc)==1
+    i = inc[1]
+    p = convert(Array, df[i,pvars]) .&lt; dt
+    p[ismissing.(p)] .= false
+    d[:,t,s] .= vcat(p, convert(Array, df[i, dvars]))
+    x[:,t,s] .= vcat(p, convert(Array, df[i, xvars]))
+    m[:,t,s] .= convert(Array, df[i, mvars])./100
+    cc[t,s] = df[i, :cases]
+    if (t&gt;1)
+      cases[t,s] = max(0.0,cc[t,s] - cc[t-1,s])
+    end
+  end
+end
+</code></pre>
+
+<p>Estimation</p>
+<pre><code class="julia">mdl = rt(cases, m, d, x)
+#@time  chain=Turing.sample(mdl, HMC(1e-6, 3), 50);
+
+#using Turing.Variational
+#q0 = Variational.meanfield(mdl);
+#advi = ADVI(10, 10_000)
+#@time q = vi(mdl, ADVI(10,100), q0, optimizer=Variational.DecayedADAGrad(1e-2, 1.1, 0.9));
+#chain = Turing.sample(mdl, NUTS(500, 0.65, max_depth=4, init_ϵ=1e-4), 1000)
+</code></pre>
+
 <div class="references hanging-indent" id="refs">
 <div id="ref-bettencourt2008">
 <p>Bettencourt, Ruy M., Luís M. A. AND Ribeiro. 2008. “Real Time Bayesian

@@ -740,6 +740,7 @@ R_{s,0} & \sim N(\mu_{R,0}, \sigma^2_{R,0}) \\
 R_{s,t} & = \rho R_{s,t} + u_{s,t} \;,\; u_{s,t} \sim N(0, \sigma^2_R) \\
 \Delta \log(k)_{s,t} & = \gamma (R_{s,t} - 1) + \epsilon_{s,t} -
 \epsilon_{s,t-1} \;, \; \epsilon_{s,t} \sim N(0, \sigma^2_k)
+\end{align*}
 </script>
 </p>
 <p>Note that the Poisson assumption on the distribution of $k_{s,t}$ used
@@ -751,8 +752,11 @@ standard Kalman filter. Of course, $\epsilon_{s,t} - \epsilon_{s,t-1}$
 is not independent over time, so we must adjust the Kalman filter
 accordingly. We follow the approach of (Kurtz and Lin
 <a href="#ref-kurtz2019">2019</a>) to make this adjustment.</p>
-<p>!!! question Is there a better reference? I’m sure someone did this much
-earlier than 2019…</p>
+<div class="admonition question">
+<p class="admonition-title">Question</p>
+<p>Is there a better reference? I&rsquo;m sure someone did this much
+earlier than 2019&hellip;</p>
+</div>
 <p>We estimate the parameters using data from US states. We set time 0 as
 the first day in which a state had at least 10 cumulative cases. We then
 compute posteriors for the parameters by MCMC. We place the following
@@ -780,13 +784,12 @@ priors = (γ = truncated(Normal(1/7,1/7), 1/28, 1/1),
  ρ = Uniform{Float64}(a=-1.0, b=1.1))
 </code></pre>
 <p>The estimation is fast and the chain appears to mix well.</p>
-<pre><code class="julia">day1 = Dates.Date(&quot;2020-03-01&quot;)
-sdf = sort(sdf, (:state, :date));
+<pre><code class="julia">sdf = sort(sdf, (:state, :date));
 dlogk = [filter(x-&gt;((x.state==st) .&amp;
-                    (x.date .&gt;=day1)),
+                    (x.cases .&gt;=10)),
                 sdf).dlogk for st in unique(sdf.state)];
 dates = [filter(x-&gt;((x.state==st) .&amp;
-                    (x.date .&gt;=day1)),
+                    (x.cases .&gt;=10)),
                 sdf).date for st in unique(sdf.state)];
 
 mdl = RT.RtRW(dlogk, priors)
@@ -799,7 +802,7 @@ x0 = inverse(trans,p0)
 @time LogDensityProblems.logdensity_and_gradient(∇P, x0);
 </code></pre>
 
-<pre><code>1.208051 seconds (2.46 M allocations: 121.335 MiB)
+<pre><code>1.537403 seconds (2.46 M allocations: 121.086 MiB, 16.43% gc time)
 </code></pre>
 <pre><code class="julia">rng = MersenneTwister()
 steps = 100
@@ -834,22 +837,22 @@ parameters        = γ, σR0, μR0, σR, σk, ρ
 Summary Statistics
   parameters    mean     std  naive_se    mcse        ess   r_hat
   ──────────  ──────  ──────  ────────  ──────  ─────────  ──────
-           γ  0.1464  0.0824    0.0018  0.0031   604.4552  0.9996
-         σR0  0.3028  0.3306    0.0074  0.0097  1039.7345  0.9995
-         μR0  3.8108  1.5130    0.0338  0.0574   587.9816  0.9997
-          σR  0.0522  0.0589    0.0013  0.0023   699.8437  1.0003
-          σk  1.0111  0.0141    0.0003  0.0002  2425.6526  0.9997
-           ρ  0.9793  0.0050    0.0001  0.0002   792.7027  1.0006
+           γ  0.1001  0.0357    0.0008  0.0014   797.9978  1.0004
+         σR0  0.9812  0.8103    0.0181  0.0273  1082.6121  1.0004
+         μR0  6.2236  1.7622    0.0394  0.0603  1226.1912  1.0004
+          σR  0.1108  0.0965    0.0022  0.0024  1796.4505  1.0001
+          σk  1.0524  0.0165    0.0004  0.0003  2990.9421  0.9995
+           ρ  0.9402  0.0117    0.0003  0.0004  1318.8002  0.9996
 
 Quantiles
-  parameters    2.5%   25.0%   50.0%   75.0%   97.5%
-  ──────────  ──────  ──────  ──────  ──────  ──────
-           γ  0.0445  0.0825  0.1261  0.1910  0.3623
-         σR0  0.0080  0.0850  0.1954  0.4004  1.2304
-         μR0  1.8633  2.6503  3.4631  4.6703  7.6341
-          σR  0.0010  0.0133  0.0308  0.0717  0.2168
-          σk  0.9828  1.0010  1.0106  1.0207  1.0394
-           ρ  0.9690  0.9759  0.9797  0.9830  0.9881
+  parameters    2.5%   25.0%   50.0%   75.0%    97.5%
+  ──────────  ──────  ──────  ──────  ──────  ───────
+           γ  0.0537  0.0753  0.0925  0.1168   0.1910
+         σR0  0.0437  0.3704  0.7710  1.4055   3.0404
+         μR0  3.2775  4.9078  6.1123  7.3255  10.2025
+          σR  0.0037  0.0396  0.0849  0.1563   0.3551
+          σk  1.0214  1.0413  1.0522  1.0635   1.0842
+           ρ  0.9170  0.9325  0.9404  0.9484   0.9623
 </code></pre>
 <pre><code class="julia">display(plot(cc))
 </code></pre>
@@ -937,9 +940,12 @@ slightly less than 1 estimate of $\rho$. This drives the posteriors of
 $R_{s,t}$ in every state to decrease over time. Since
 $\sigma_k &gt;&gt; \sigma_R$, the actual realizations of $\Delta \log k$ do
 not affect the state-specific posteriors very much.</p>
-<p>!!! note I also tried fixing $\rho=1$. This gives similar results in
-terms of $\sigma_k &gt;&gt; \sigma_R$, and gives posterior $R_{s,t}$ that
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>I also tried fixing $\rho=1$. This gives similar results in terms
+of $\sigma_k &gt;&gt; \sigma_R$, and gives posterior $R_{s,t}$ that
 approximately constant over time.</p>
+</div>
 <div class="references hanging-indent" id="refs">
 <div id="ref-bettencourt2008">
 <p>Bettencourt, Ruy M., Luís M. A. AND Ribeiro. 2008. “Real Time Bayesian

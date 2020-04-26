@@ -215,7 +215,7 @@ depend on covariates.</p>
 \tilde{R}_{s,0} & \sim N(X_{0,s} \alpha_0, \sigma^2_{R,0}) \\
 \tilde{R}_{s,t} & = \rho \tilde{R}_{s,t} + u_{s,t} \;,\; u_{s,t} \sim
 N(0, \sigma^2_R) \\
-R_{s,t} = X_{s,t} \alpha + \tilde{R}_{s,t}
+R_{s,t} & = X_{s,t} \alpha + \tilde{R}_{s,t} \\
 \Delta \log(k)_{s,t} & = \gamma (R_{s,t} - 1) + \epsilon_{s,t} -
 \epsilon_{s,t-1} \;, \; \epsilon_{s,t} \sim N(0, \sigma^2_k)
 \end{align*}
@@ -245,7 +245,7 @@ x0 = inverse(trans,p0)
 @time LogDensityProblems.logdensity_and_gradient(∇P, x0);
 </code></pre>
 
-<pre><code>2.121750 seconds (4.01 M allocations: 193.342 MiB, 9.42% gc time)
+<pre><code>2.090468 seconds (4.01 M allocations: 193.476 MiB, 9.03% gc time)
 </code></pre>
 <pre><code class="julia">rng = MersenneTwister()
 steps = 100

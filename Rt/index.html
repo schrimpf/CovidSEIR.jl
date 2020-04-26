@@ -8,7 +8,7 @@
         <meta name="author" content="Paul Schrimpf">
         
         <link rel="shortcut icon" href="../img/favicon.ico">
-        <title>Reproductive number - CovidSEIR.jl</title>
+        <title>Systrom Approach - CovidSEIR.jl</title>
         <link href="../css/bootstrap.min.css" rel="stylesheet">
         <link href="../css/font-awesome.min.css" rel="stylesheet">
         <link href="../css/base.css" rel="stylesheet">
@@ -76,9 +76,19 @@
     <a href="../state/" class="dropdown-item">US States</a>
 </li>
                                     
+  <li class="dropdown-submenu">
+    <a href="#" class="dropdown-item">Reproductive number</a>
+    <ul class="dropdown-menu">
+            
 <li>
-    <a href="./" class="dropdown-item active">Reproductive number</a>
+    <a href="./" class="dropdown-item active">Systrom Approach</a>
 </li>
+            
+<li>
+    <a href="../rt_longdiff/" class="dropdown-item">Long-differening</a>
+</li>
+    </ul>
+  </li>
                                 </ul>
                             </li>
                             <li class="dropdown">
@@ -104,7 +114,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="../license/" class="nav-link">
+                                <a rel="next" href="../rt_longdiff/" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
@@ -150,7 +160,12 @@
             
             <li class="nav-item" data-level="1"><a href="#an-alternative-approach" class="nav-link">An alternative approach</a>
               <ul class="nav flex-column">
-            <li class="nav-item" data-level="2"><a href="#state-space-model" class="nav-link">State space model</a>
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-level="1"><a href="#state-space-model" class="nav-link">State space model</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-level="2"><a href="#posteriors-for-additional-states" class="nav-link">Posteriors for additional states</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -277,33 +292,19 @@ Plots.pyplot()
 df = CovidSEIR.statedata()
 df = filter(x-&gt;x.fips&lt;60, df)
 # focus on 10 states with most cases as of April 1, 2020
-sdf = select(df[df[!,:date].==Dates.Date(&quot;2020-04-01&quot;),:], :cases, :state) |&gt;
-    x-&gt;sort(x,:cases, rev=true)
+sdf = select(df[df[!,:date].==Dates.Date(&quot;2020-04-01&quot;),:], Symbol(&quot;cases.nyt&quot;), :state) |&gt;
+    x-&gt;sort(x,Symbol(&quot;cases.nyt&quot;), rev=true)
 states=sdf[1:10,:state]
-sdf = select(filter(r-&gt;r[:state] ∈ states, df), :cases, :state, :date)
+sdf = select(filter(r-&gt;r[:state] ∈ states, df), Symbol(&quot;cases.nyt&quot;), :state, :date)
 sdf = sort(sdf, [:state, :date])
-sdf[!,:newcases] = by(sdf, :state, newcases = :cases =&gt; x-&gt;(vcat(missing, diff(x))))[!,:newcases]
+sdf[!,:newcases] = by(sdf, :state, newcases = Symbol(&quot;cases.nyt&quot;) =&gt; x-&gt;(vcat(missing, diff(x))))[!,:newcases]
 
 figs = []
 for gdf in groupby(sdf, :state)
-  @show unique(gdf.state)
   f = @df gdf plot(:date, :newcases, legend=:none, linewidth=2, title=unique(gdf.state)[1])
   global figs = vcat(figs,f)
 end
-</code></pre>
-
-<pre><code>unique(gdf.state) = ["California"]
-unique(gdf.state) = ["Florida"]
-unique(gdf.state) = ["Illinois"]
-unique(gdf.state) = ["Louisiana"]
-unique(gdf.state) = ["Massachusetts"]
-unique(gdf.state) = ["Michigan"]
-unique(gdf.state) = ["New Jersey"]
-unique(gdf.state) = ["New York"]
-unique(gdf.state) = ["Pennsylvania"]
-unique(gdf.state) = ["Washington"]
-</code></pre>
-<pre><code class="julia">display(plot(figs[1:9]..., layout=(3,3)))
+display(plot(figs[1:9]..., layout=(3,3)))
 </code></pre>
 
 <p><img alt="" src="../figures/Rt_1_1.png" /></p>
@@ -362,7 +363,7 @@ function rtpostgrid(cases)
           pkr = casepdf.(λ, cases[t])
           if (all(pkr.==0))
             @warn &quot;all pkr=0&quot;
-            @show t, cases[t], cases[t-1]
+            #@show t, cases[t], cases[t-1]
             pkr .= 1
           end
         end
@@ -398,31 +399,6 @@ for σ in [0.1, 0.25, 1]
 end
 </code></pre>
 
-<pre><code>(t, cases[t], cases[t - 1]) = (72, 2052, 215)
-(t, cases[t], cases[t - 1]) = (90, 0, 1705)
-(t, cases[t], cases[t - 1]) = (91, 3122, 0)
-(t, cases[t], cases[t - 1]) = (55, 352, 2)
-(t, cases[t], cases[t - 1]) = (89, 6103, 11115)
-(t, cases[t], cases[t - 1]) = (54, -39, 74)
-(t, cases[t], cases[t - 1]) = (90, -141, 479)
-(t, cases[t], cases[t - 1]) = (91, 449, -141)
-(t, cases[t], cases[t - 1]) = (72, 2052, 215)
-(t, cases[t], cases[t - 1]) = (90, 0, 1705)
-(t, cases[t], cases[t - 1]) = (91, 3122, 0)
-(t, cases[t], cases[t - 1]) = (55, 352, 2)
-(t, cases[t], cases[t - 1]) = (89, 6103, 11115)
-(t, cases[t], cases[t - 1]) = (54, -39, 74)
-(t, cases[t], cases[t - 1]) = (90, -141, 479)
-(t, cases[t], cases[t - 1]) = (91, 449, -141)
-(t, cases[t], cases[t - 1]) = (72, 2052, 215)
-(t, cases[t], cases[t - 1]) = (90, 0, 1705)
-(t, cases[t], cases[t - 1]) = (91, 3122, 0)
-(t, cases[t], cases[t - 1]) = (55, 352, 2)
-(t, cases[t], cases[t - 1]) = (89, 6103, 11115)
-(t, cases[t], cases[t - 1]) = (54, -39, 74)
-(t, cases[t], cases[t - 1]) = (90, -141, 479)
-(t, cases[t], cases[t - 1]) = (91, 449, -141)
-</code></pre>
 <p><img alt="" src="../figures/Rt_2_1.png" /> <img alt="" src="../figures/Rt_2_2.png" /> <img alt="" src="../figures/Rt_2_3.png" /></p>
 <p>In these results, what is happening is that when new cases fluctuate too
 much, the likelihood is identically 0, causing the posterior calculation
@@ -454,38 +430,13 @@ for σ in [0.1, 0.25, 0.5]
 end
 </code></pre>
 
-<pre><code>(t, cases[t], cases[t - 1]) = (90, 0, 1705)
-(t, cases[t], cases[t - 1]) = (91, 3122, 0)
-(t, cases[t], cases[t - 1]) = (54, -39, 74)
-(t, cases[t], cases[t - 1]) = (90, -141, 479)
-(t, cases[t], cases[t - 1]) = (54, -39, 74)
-(t, cases[t], cases[t - 1]) = (90, -141, 479)
-(t, cases[t], cases[t - 1]) = (54, -39, 74)
-(t, cases[t], cases[t - 1]) = (90, -141, 479)
-(t, cases[t], cases[t - 1]) = (90, 0, 1705)
-(t, cases[t], cases[t - 1]) = (91, 3122, 0)
-(t, cases[t], cases[t - 1]) = (54, -39, 74)
-(t, cases[t], cases[t - 1]) = (90, -141, 479)
-(t, cases[t], cases[t - 1]) = (54, -39, 74)
-(t, cases[t], cases[t - 1]) = (90, -141, 479)
-(t, cases[t], cases[t - 1]) = (54, -39, 74)
-(t, cases[t], cases[t - 1]) = (90, -141, 479)
-(t, cases[t], cases[t - 1]) = (90, 0, 1705)
-(t, cases[t], cases[t - 1]) = (91, 3122, 0)
-(t, cases[t], cases[t - 1]) = (54, -39, 74)
-(t, cases[t], cases[t - 1]) = (90, -141, 479)
-(t, cases[t], cases[t - 1]) = (54, -39, 74)
-(t, cases[t], cases[t - 1]) = (90, -141, 479)
-(t, cases[t], cases[t - 1]) = (54, -39, 74)
-(t, cases[t], cases[t - 1]) = (90, -141, 479)
-</code></pre>
 <p><img alt="" src="../figures/Rt_3_1.png" /> <img alt="" src="../figures/Rt_3_2.png" /> <img alt="" src="../figures/Rt_3_3.png" />
 <img alt="" src="../figures/Rt_3_4.png" /> <img alt="" src="../figures/Rt_3_5.png" /> <img alt="" src="../figures/Rt_3_6.png" />
 <img alt="" src="../figures/Rt_3_7.png" /> <img alt="" src="../figures/Rt_3_8.png" /> <img alt="" src="../figures/Rt_3_9.png" /></p>
 <p>What Systrom did was smooth the new cases before using the Poisson
 distribution. He used a window width of $7$ and Gaussian weights with
 standard deviation $2$.</p>
-<pre><code class="julia">using RollingFunctions
+<pre><code class="julia">include(&quot;jmd/rtmod.jl&quot;)
 σ = 0.25
 Plots.closeall()
 for w in [3, 7, 11]
@@ -497,7 +448,7 @@ for w in [3, 7, 11]
       windowsize = w
       weights = pdf(Normal(0, s), -floor(windowsize/2):floor(windowsize/2))
       weights = weights/sum(weights)
-      smoothcases = Int.(round.(runmean(gdf.newcases[2:end], windowsize, weights*windowsize)))
+      smoothcases = RT.smoother(gdf.newcases, w=weights)
       p, m, cr = rtpost(smoothcases, γ, σ, x-&gt;pdf(truncated(Gamma(4,1),0,8), x),
                         (λ,x)-&gt;pdf(Poisson(λ),x))
       f = plot(gdf.date, m, ribbon=(m-cr[:,1], cr[:,2] - m), title=unique(gdf.state)[1], legend=:none, ylabel=&quot;Rₜ&quot;)
@@ -511,11 +462,6 @@ for w in [3, 7, 11]
 end
 </code></pre>
 
-<pre><code>(t, cases[t], cases[t - 1]) = (54, -4, 68)
-(t, cases[t], cases[t - 1]) = (90, -12, 390)
-(t, cases[t], cases[t - 1]) = (56, -4, 68)
-(t, cases[t], cases[t - 1]) = (58, -4, 68)
-</code></pre>
 <p><img alt="" src="../figures/Rt_4_1.png" /> <img alt="" src="../figures/Rt_4_2.png" /> <img alt="" src="../figures/Rt_4_3.png" />
 <img alt="" src="../figures/Rt_4_4.png" /> <img alt="" src="../figures/Rt_4_5.png" /> <img alt="" src="../figures/Rt_4_6.png" />
 <img alt="" src="../figures/Rt_4_7.png" /> <img alt="" src="../figures/Rt_4_8.png" /> <img alt="" src="../figures/Rt_4_9.png" /></p>
@@ -584,7 +530,7 @@ for p in pvars
   sdf[!,p] = by(sdf, :state, (:date, p) =&gt; x-&gt;(!ismissing(unique(x[p])[1]) .&amp; (x.date .&gt;= unique(x[p])[1]))).x1
 end
 sdf = sort(sdf, [:state, :date])
-sdf[!,:newcases] = by(sdf, :state, newcases = :cases =&gt; x-&gt;(vcat(missing, diff(x))))[!,:newcases]
+sdf[!,:newcases] = by(sdf, :state, newcases = Symbol(&quot;cases.nyt&quot;) =&gt; x-&gt;(vcat(missing, diff(x))))[!,:newcases]
 sdf[!,:dlogk] = by(sdf, :state, dlogk = :newcases =&gt; x-&gt;(vcat(missing, diff(log.(max.(x,0.1))))))[!,:dlogk]
 
 fmla = FormulaTerm(Term(:dlogk), Tuple(Term.(vcat(pvars,:state))))
@@ -593,135 +539,135 @@ regtable(reg, renderSettings=asciiOutput())
 </code></pre>
 
 <pre><code>-----------------------------------------------
-                                         dlogk
+                                         dlogk 
                                         -------
                                             (1)
 -----------------------------------------------
-(Intercept)                               0.047
-                                        (0.155)
-Stay.at.home..shelter.in.place           -0.160
-                                        (0.094)
-State.of.emergency                       0.200*
+(Intercept)                               0.185
+                                        (0.184)
+Stay.at.home..shelter.in.place           -0.057
+                                        (0.067)
+State.of.emergency                        0.037
                                         (0.080)
-Date.closed.K.12.schools                 0.246*
-                                        (0.118)
-Closed.gyms                              -0.208
-                                        (0.200)
-Closed.movie.theaters                     0.128
-                                        (0.204)
-Closed.day.cares                          0.031
-                                        (0.100)
-Date.banned.visitors.to.nursing.homes    -0.050
-                                        (0.083)
-Closed.non.essential.businesses          -0.102
-                                        (0.110)
-Closed.restaurants.except.take.out       -0.143
-                                        (0.159)
-state: Alaska                            -0.033
-                                        (0.219)
-state: Arizona                           -0.036
-                                        (0.221)
-state: Arkansas                          -0.030
-                                        (0.226)
-state: California                         0.015
-                                        (0.222)
-state: Colorado                           0.069
-                                        (0.217)
-state: Connecticut                        0.006
-                                        (0.218)
-state: Delaware                           0.016
-                                        (0.216)
-state: District of Columbia               0.002
-                                        (0.219)
-state: Florida                           -0.006
-                                        (0.218)
-state: Georgia                           -0.044
-                                        (0.218)
-state: Hawaii                            -0.117
-                                        (0.229)
-state: Idaho                              0.006
-                                        (0.218)
-state: Illinois                           0.036
-                                        (0.215)
-state: Indiana                            0.020
-                                        (0.219)
-state: Iowa                               0.034
-                                        (0.220)
-state: Kansas                            -0.118
-                                        (0.221)
-state: Kentucky                          -0.061
-                                        (0.216)
-state: Louisiana                          0.049
-                                        (0.217)
-state: Maine                              0.017
-                                        (0.219)
-state: Maryland                           0.009
+Date.closed.K.12.schools                -0.174*
+                                        (0.087)
+Closed.gyms                              -0.086
+                                        (0.129)
+Closed.movie.theaters                     0.074
+                                        (0.136)
+Closed.day.cares                         -0.012
+                                        (0.063)
+Date.banned.visitors.to.nursing.homes     0.042
+                                        (0.052)
+Closed.non.essential.businesses           0.040
+                                        (0.079)
+Closed.restaurants.except.take.out       -0.006
+                                        (0.114)
+state: Alaska                            -0.032
+                                        (0.249)
+state: Arizona                           -0.009
                                         (0.214)
-state: Massachusetts                      0.053
+state: Arkansas                           0.005
+                                        (0.247)
+state: California                        -0.032
+                                        (0.214)
+state: Colorado                          -0.014
+                                        (0.239)
+state: Connecticut                        0.051
+                                        (0.243)
+state: Delaware                          -0.005
+                                        (0.247)
+state: District of Columbia               0.065
+                                        (0.242)
+state: Florida                            0.078
+                                        (0.235)
+state: Georgia                            0.073
+                                        (0.236)
+state: Hawaii                            -0.031
+                                        (0.240)
+state: Idaho                             -0.058
+                                        (0.250)
+state: Illinois                          -0.020
                                         (0.213)
-state: Michigan                           0.043
-                                        (0.213)
-state: Minnesota                          0.030
+state: Indiana                            0.062
+                                        (0.241)
+state: Iowa                              -0.040
+                                        (0.243)
+state: Kansas                             0.071
+                                        (0.242)
+state: Kentucky                           0.046
+                                        (0.241)
+state: Louisiana                         -0.012
+                                        (0.244)
+state: Maine                             -0.021
+                                        (0.249)
+state: Maryland                           0.091
+                                        (0.239)
+state: Massachusetts                      0.011
                                         (0.216)
-state: Mississippi                       -0.011
+state: Michigan                           0.119
+                                        (0.246)
+state: Minnesota                          0.068
+                                        (0.241)
+state: Mississippi                        0.105
+                                        (0.247)
+state: Missouri                           0.091
+                                        (0.242)
+state: Montana                           -0.055
+                                        (0.250)
+state: Nebraska                           0.039
+                                        (0.225)
+state: Nevada                             0.077
+                                        (0.239)
+state: New Hampshire                      0.007
+                                        (0.236)
+state: New Jersey                         0.106
+                                        (0.238)
+state: New Mexico                         0.042
+                                        (0.247)
+state: New York                           0.136
+                                        (0.235)
+state: North Carolina                     0.095
+                                        (0.237)
+state: North Dakota                       0.069
+                                        (0.247)
+state: Ohio                               0.135
+                                        (0.244)
+state: Oklahoma                           0.083
+                                        (0.240)
+state: Oregon                             0.038
+                                        (0.233)
+state: Pennsylvania                       0.072
+                                        (0.241)
+state: Rhode Island                       0.079
+                                        (0.235)
+state: South Carolina                     0.082
+                                        (0.241)
+state: South Dakota                       0.010
+                                        (0.246)
+state: Tennessee                          0.093
+                                        (0.239)
+state: Texas                             -0.004
+                                        (0.222)
+state: Utah                               0.024
+                                        (0.231)
+state: Vermont                           -0.027
+                                        (0.242)
+state: Virginia                           0.052
+                                        (0.242)
+state: Washington                        -0.032
+                                        (0.212)
+state: West Virginia                      0.025
+                                        (0.257)
+state: Wisconsin                         -0.008
                                         (0.218)
-state: Missouri                          -0.098
-                                        (0.218)
-state: Montana                           -0.022
-                                        (0.216)
-state: Nebraska                          -0.075
-                                        (0.218)
-state: Nevada                            -0.006
-                                        (0.219)
-state: New Hampshire                      0.012
-                                        (0.216)
-state: New Jersey                         0.051
-                                        (0.216)
-state: New Mexico                        -0.050
-                                        (0.216)
-state: New York                           0.082
-                                        (0.217)
-state: North Carolina                     0.009
-                                        (0.216)
-state: North Dakota                      -0.090
-                                        (0.218)
-state: Ohio                               0.046
-                                        (0.213)
-state: Oklahoma                          -0.054
-                                        (0.217)
-state: Oregon                            -0.019
-                                        (0.215)
-state: Pennsylvania                       0.022
-                                        (0.213)
-state: Rhode Island                       0.012
-                                        (0.213)
-state: South Carolina                    -0.091
-                                        (0.216)
-state: South Dakota                      -0.165
-                                        (0.220)
-state: Tennessee                          0.005
-                                        (0.216)
-state: Texas                              0.033
-                                        (0.217)
-state: Utah                              -0.112
-                                        (0.218)
-state: Vermont                           -0.019
-                                        (0.213)
-state: Virginia                          -0.031
-                                        (0.220)
-state: Washington                         0.029
-                                        (0.217)
-state: West Virginia                     -0.016
-                                        (0.216)
-state: Wisconsin                          0.013
-                                        (0.219)
-state: Wyoming                           -0.077
-                                        (0.218)
+state: Wyoming                            0.003
+                                        (0.247)
 -----------------------------------------------
 Estimator                                   OLS
 -----------------------------------------------
-N                                         4,539
-R2                                        0.006
+N                                         2,621
+R2                                        0.007
 -----------------------------------------------
 </code></pre>
 <p>From this we get that if we assume $\gamma = 1/7$, then the the baseline
@@ -732,12 +678,14 @@ $7(0.046 + 0.035 - 0.147) + 1 \approx 0.53$.</p>
 strange. This is likely due to assumption 1 being incorrect. There is
 likely an unobserved component of $R_{s,t}$ that is positively
 correlated with policy indicators.</p>
-<h2 id="state-space-model">State space model<a class="headerlink" href="#state-space-model" title="Permanent link">&para;</a></h2>
+<h1 id="state-space-model">State space model<a class="headerlink" href="#state-space-model" title="Permanent link">&para;</a></h1>
 <p>A direct analog of Systrom’s approach is to treat $R_{s,t}$ as an
 unobserved latent process. Specifically, we will assume that <script type="math/tex; mode=display">
 \begin{align*}
-R_{s,0} & \sim N(\mu_{R,0}, \sigma^2_{R,0}) \\
-R_{s,t} & = \rho R_{s,t} + u_{s,t} \;,\; u_{s,t} \sim N(0, \sigma^2_R) \\
+\tilde{R}_{s,0} & \sim N(\alpha_0, \sigma^2_{R,0}) \\
+\tilde{R}_{s,t} & = \rho \tilde{R}_{s,t} + u_{s,t} \;,\; u_{s,t} \sim
+N(0, \sigma^2_R) \\
+R_{s,t} = \alpha + \tilde{R}_{s,t}
 \Delta \log(k)_{s,t} & = \gamma (R_{s,t} - 1) + \epsilon_{s,t} -
 \epsilon_{s,t-1} \;, \; \epsilon_{s,t} \sim N(0, \sigma^2_k)
 \end{align*}
@@ -762,29 +710,38 @@ the first day in which a state had at least 10 cumulative cases. We then
 compute posteriors for the parameters by MCMC. We place the following
 priors on the parameters.</p>
 <pre><code class="julia">using Distributions, TransformVariables, DynamicHMC, MCMCChains, Plots, StatsPlots,
-  LogDensityProblems, Random, LinearAlgebra
+  LogDensityProblems, Random, LinearAlgebra, JLD2
 include(&quot;jmd/rtmod.jl&quot;)
 
 rlo=-1
 rhi=1.1
 priors = (γ = truncated(Normal(1/7,1/7), 1/28, 1/1),
           σR0 = truncated(Normal(1, 3), 0, Inf),
-          μR0 = truncated(Normal(1, 3), 0, Inf),
+          α0 = MvNormal([1], 3),
           σR = truncated(Normal(0.25,1),0,Inf),
           σk = truncated(Normal(0.1, 5), 0, Inf),
-          #ρ = Uniform(-1,1.1))
+          α = MvNormal([1], 3),
           ρ = Uniform(rlo, rhi))
 </code></pre>
 
 <pre><code>(γ = Truncated(Normal{Float64}(μ=0.14285714285714285, σ=0.14285714285714285
 ), range=(0.03571428571428571, 1.0)), σR0 = Truncated(Normal{Float64}(μ=1.0
-, σ=3.0), range=(0.0, Inf)), μR0 = Truncated(Normal{Float64}(μ=1.0, σ=3.0),
- range=(0.0, Inf)), σR = Truncated(Normal{Float64}(μ=0.25, σ=1.0), range=(0
-.0, Inf)), σk = Truncated(Normal{Float64}(μ=0.1, σ=5.0), range=(0.0, Inf)),
- ρ = Uniform{Float64}(a=-1.0, b=1.1))
+, σ=3.0), range=(0.0, Inf)), α0 = IsoNormal(
+dim: 1
+μ: [1.0]
+Σ: [9.0]
+)
+, σR = Truncated(Normal{Float64}(μ=0.25, σ=1.0), range=(0.0, Inf)), σk = Tr
+uncated(Normal{Float64}(μ=0.1, σ=5.0), range=(0.0, Inf)), α = IsoNormal(
+dim: 1
+μ: [1.0]
+Σ: [9.0]
+)
+, ρ = Uniform{Float64}(a=-1.0, b=1.1))
 </code></pre>
 <p>The estimation is fast and the chain appears to mix well.</p>
-<pre><code class="julia">sdf = sort(sdf, (:state, :date));
+<pre><code class="julia">reestimate=false
+sdf = sort(sdf, (:state, :date));
 dlogk = [filter(x-&gt;((x.state==st) .&amp;
                     (x.cases .&gt;=10)),
                 sdf).dlogk for st in unique(sdf.state)];
@@ -793,16 +750,17 @@ dates = [filter(x-&gt;((x.state==st) .&amp;
                 sdf).date for st in unique(sdf.state)];
 
 mdl = RT.RtRW(dlogk, priors)
-trans = as( (γ = asℝ₊, σR0 = asℝ₊, μR0 = asℝ₊,
-             σR = asℝ₊, σk = asℝ₊, ρ=as(Real, rlo, rhi)) )
+trans = as( (γ = asℝ₊, σR0 = asℝ₊, α0 = as(Array, 1),
+             σR = asℝ₊, σk = asℝ₊, α = as(Array,1),
+             ρ=as(Real, rlo, rhi)) )
 P = TransformedLogDensity(trans, mdl)
 ∇P = ADgradient(:ForwardDiff, P)
-p0 = (γ = 1/7, σR0=1.0, μR0=4.0,σR=0.25, σk=2.0, ρ=0.9)
+p0 = (γ = 1/7, σR0=1.0, α0=[4.0],σR=0.25, σk=2.0, α=[1], ρ=0.9)
 x0 = inverse(trans,p0)
 @time LogDensityProblems.logdensity_and_gradient(∇P, x0);
 </code></pre>
 
-<pre><code>1.537403 seconds (2.46 M allocations: 121.086 MiB, 16.43% gc time)
+<pre><code>1.901263 seconds (3.89 M allocations: 190.595 MiB)
 </code></pre>
 <pre><code class="julia">rng = MersenneTwister()
 steps = 100
@@ -811,10 +769,14 @@ warmup=default_warmup_stages(local_optimization=nothing,
                              init_steps=steps, middle_steps=steps,
                              terminating_steps=2*steps,  doubling_stages=3, M=Symmetric)
 x0 = x0
-res = DynamicHMC.mcmc_keep_warmup(rng, ∇P, 2000;initialization = (q = x0, ϵ=0.1),
-                                  reporter = LogProgressReport(nothing, 25, 15),
-                                  warmup_stages =warmup);
-post = transform.(trans,res.inference.chain)
+if (!isfile(&quot;rt1.jld2&quot;) || reestimate)
+  res = DynamicHMC.mcmc_keep_warmup(rng, ∇P, 2000;initialization = (q = x0, ϵ=0.1),
+                                    reporter = LogProgressReport(nothing, 25, 15),
+                                    warmup_stages =warmup);
+  post = transform.(trans,res.inference.chain)
+  @save &quot;rt1.jld2&quot; post
+end
+@load &quot;rt1.jld2&quot; post
 p = post[1]
 vals = hcat([vcat([length(v)==1 ? v : vec(v) for v in values(p)]...) for p in post]...)'
 vals = reshape(vals, size(vals)..., 1)
@@ -823,36 +785,38 @@ cc = MCMCChains.Chains(vals, names)
 display(cc)
 </code></pre>
 
-<pre><code>Object of type Chains, with data of type 2000×6×1 reshape(::Adjoint{Float64
-,Array{Float64,2}}, 2000, 6, 1) with eltype Float64
+<pre><code>Object of type Chains, with data of type 2000×7×1 reshape(::Adjoint{Float64
+,Array{Float64,2}}, 2000, 7, 1) with eltype Float64
 
 Iterations        = 1:2000
 Thinning interval = 1
 Chains            = 1
 Samples per chain = 2000
-parameters        = γ, σR0, μR0, σR, σk, ρ
+parameters        = γ, σR0, α0, σR, σk, α, ρ
 
 2-element Array{ChainDataFrame,1}
 
 Summary Statistics
   parameters    mean     std  naive_se    mcse        ess   r_hat
   ──────────  ──────  ──────  ────────  ──────  ─────────  ──────
-           γ  0.1001  0.0357    0.0008  0.0014   797.9978  1.0004
-         σR0  0.9812  0.8103    0.0181  0.0273  1082.6121  1.0004
-         μR0  6.2236  1.7622    0.0394  0.0603  1226.1912  1.0004
-          σR  0.1108  0.0965    0.0022  0.0024  1796.4505  1.0001
-          σk  1.0524  0.0165    0.0004  0.0003  2990.9421  0.9995
-           ρ  0.9402  0.0117    0.0003  0.0004  1318.8002  0.9996
+           γ  0.0931  0.0381    0.0009  0.0023   194.3582  1.0034
+         σR0  1.1247  0.7666    0.0171  0.0361   515.4800  1.0000
+          α0  5.0630  1.8530    0.0414  0.0870   344.8905  1.0025
+          σR  0.0957  0.0855    0.0019  0.0022  1213.6056  0.9996
+          σk  0.5685  0.0087    0.0002  0.0002  2659.9467  0.9999
+           α  0.6724  0.4373    0.0098  0.0181   498.8290  1.0004
+           ρ  0.9337  0.0144    0.0003  0.0005   672.3568  0.9997
 
 Quantiles
-  parameters    2.5%   25.0%   50.0%   75.0%    97.5%
-  ──────────  ──────  ──────  ──────  ──────  ───────
-           γ  0.0537  0.0753  0.0925  0.1168   0.1910
-         σR0  0.0437  0.3704  0.7710  1.4055   3.0404
-         μR0  3.2775  4.9078  6.1123  7.3255  10.2025
-          σR  0.0037  0.0396  0.0849  0.1563   0.3551
-          σk  1.0214  1.0413  1.0522  1.0635   1.0842
-           ρ  0.9170  0.9325  0.9404  0.9484   0.9623
+  parameters     2.5%   25.0%   50.0%   75.0%   97.5%
+  ──────────  ───────  ──────  ──────  ──────  ──────
+           γ   0.0438  0.0648  0.0828  0.1129  0.1883
+         σR0   0.0525  0.5365  0.9818  1.5750  2.8887
+          α0   2.2124  3.6443  4.8462  6.2334  9.1984
+          σR   0.0030  0.0336  0.0725  0.1313  0.3281
+          σk   0.5519  0.5626  0.5684  0.5744  0.5861
+           α  -0.4498  0.4618  0.7480  0.9520  1.3733
+           ρ   0.9037  0.9249  0.9350  0.9435  0.9598
 </code></pre>
 <pre><code class="julia">display(plot(cc))
 </code></pre>
@@ -873,67 +837,41 @@ have a small effect on the posterior mean of $R$.</p>
 posterior estimates of $R_{s,t}$.</p>
 <pre><code class="julia">states = unique(sdf.state)
 s = findfirst(states.==&quot;New York&quot;)
-function plotpostr(dates, dlogk, post)
-  k = [RT.kalman(dlogk, p.σR, p.σk, p.σR0, p.μR0, p.γ, p.ρ) for p in post];
-  γ = [p.γ for p in post];
-  meanR = hcat([x[1] for x in k]...);
-  varR = hcat([x[2] for x in k]...);
-  zhat = hcat([x[3] for x in k]...);
-  c = &quot;black&quot;
-  figr = plot(dates, mean(meanR, dims=2), ribbon=1.64*mean(sqrt.(varR),dims=2), color=c, fillalpha=0.2,
-              linewidth=1.5, legend=:none, ylab=&quot;Rₜ&quot;)
-  r=([quantile(meanR[t,:] - 1.64*sqrt.(varR[t,:]), 0.05) for t in 1:size(meanR,1)],
-     [quantile(meanR[t,:] + 1.64*sqrt.(varR[t,:]), 0.95) for t in 1:size(meanR,1)])
-  figr = plot!(figr, dates, zeros(length(r[1])), ribbon=(-r[1], r[2]), color=c,
-               linewidth=0, ylim=nothing, fillalpha=0.2)
-  figr = hline!(figr, [1.], color=&quot;red&quot;, linewidth=1.5, linestyle=:dash)
-  gr = copy(meanR)
-  for i=1:length(γ)
-    gr[:,i] .= γ[i]*(meanR[:,i].-1)
-  end
-  figk = plot(dates, [dlogk mean(gr, dims=2) mean(zhat,dims=2).-mean(γ)],
-              labels=[&quot;Δlog(newcases)&quot; &quot;γ(R-1)&quot; &quot;Eₜ[Δlog(newcases)]&quot;],
-              legend=:topright, linewidth=2)
-
-  return(figr, figk)
-end
-figr, figk = plotpostr(dates[s],dlogk[s],post)
-l = @layout [a{.1h};
-             grid(2,1)]
-plot(plot(annotation=(0.5,0.5, states[s]), framestyle = :none),
-     figr, figk, layout=l)
+figr = RT.plotpostr(dates[s],dlogk[s],post, ones(length(dlogk[s]),1), [1])
+display(plot(figr, ylim=(-1,10)))
 </code></pre>
 
 <p><img alt="" src="../figures/Rt_8_1.png" /></p>
-<p>The top panel of this figure shows the posterior distribution of
-$R_{s,t}$ in New York. The black line is the posterior mean. The dark
-grey region is the average (over model parameters) of a 90% credible
-region conditional on the model parameters. This is comparable to what
-Systrom (and many others) report, and ignores uncertainty in the model
-parameters. The light grey region is a 90% credile region taking into
-account parameter uncertainty.</p>
-<p>The lower panel shows the observed $\Delta log k$, the prediction of it
-attributable to $R_t$, and the prediction of it from the full model. The
-full preduction uses the negatively correlated $MA(1)$ errors in
-$\Delta log k$ in addition to $R_t$ to forecast
-$E[\Delta \log k_{t+1} | \mathcal{I}_t]$.</p>
-<h3 id="posteriors-for-all-states">Posteriors for all States<a class="headerlink" href="#posteriors-for-all-states" title="Permanent link">&para;</a></h3>
-<pre><code class="julia">S = length(states)
+<p>This figure shows the posterior distribution of $R_{s,t}$ in New York.
+The black line is the posterior mean. The dark grey region is the
+average (over model parameters) of a 90% credible region conditional on
+the model parameters. This is comparable to what Systrom (and many
+others) report, and ignores uncertainty in the model parameters. The
+light grey region is a 90% credile region taking into account parameter
+uncertainty. The points and error bars are mean and 90% credible regions
+for <script type="math/tex; mode=display">
+\Delta \log k_{t}/\gamma + 1 = R_{t} + \epsilon_t/\gamma
+</script>
+</p>
+<h2 id="posteriors-for-additional-states">Posteriors for additional states<a class="headerlink" href="#posteriors-for-additional-states" title="Permanent link">&para;</a></h2>
+<pre><code class="julia">states_to_plot = [&quot;New Jersey&quot;,&quot;Massachusetts&quot;,&quot;California&quot;,
+                  &quot;Georgia&quot;,&quot;Illinois&quot;,&quot;Michigan&quot;,
+                  &quot;Ohio&quot;,&quot;Wisconsin&quot;,&quot;Washington&quot;]
+S = length(states_to_plot)
 figs = fill(plot(), 9*(S ÷ 9 + 1))
-for s in 1:S
-  figr, figk = plotpostr(dates[s],dlogk[s],post)
-  l = @layout [a{.1h};
-               grid(1,1)]
-  figs[s] = plot(plot(annotation=(0.5,0.5, states[s]), framestyle = :none),
-                 figr, layout=l)
-  if ((s % 9) ==0 || ( s==length(states)))
-    display(plot(figs[(s-8):s]..., layout=(3,3), reuse=false))
+for (i,st) in enumerate(states_to_plot)
+  s = findfirst(states.==st)
+  figr = RT.plotpostr(dates[s],dlogk[s],post, ones(length(dlogk[s]),1),[1])
+  l = @layout [a{.1h}; grid(1,1)]
+  figs[i] = plot(plot(annotation=(0.5,0.5, st), framestyle = :none),
+                 plot(figr, ylim=(-1,10)), layout=l)
+  if ((i % 9) ==0 || ( i==length(states_to_plot)))
+    display(plot(figs[(i-8):i]..., layout=(3,3), reuse=false))
   end
 end
 </code></pre>
 
-<p><img alt="" src="../figures/Rt_9_1.png" /> <img alt="" src="../figures/Rt_9_2.png" /> <img alt="" src="../figures/Rt_9_3.png" />
-<img alt="" src="../figures/Rt_9_4.png" /> <img alt="" src="../figures/Rt_9_5.png" /> <img alt="" src="../figures/Rt_9_6.png" /></p>
+<p><img alt="" src="../figures/Rt_9_1.png" /></p>
 <p>We can see that the posteriors vary very little from state to state. The
 model picks up a general downward trend in $\Delta \log k$ through the
 slightly less than 1 estimate of $\rho$. This drives the posteriors of
@@ -943,7 +881,7 @@ not affect the state-specific posteriors very much.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>I also tried fixing $\rho=1$. This gives similar results in terms
-of $\sigma_k &gt;&gt; \sigma_R$, and gives posterior $R_{s,t}$ that
+of $\sigma_k &gt;&gt; \sigma_R$, and gives a posterior for $R_{s,t}$ that is
 approximately constant over time.</p>
 </div>
 <div class="references hanging-indent" id="refs">

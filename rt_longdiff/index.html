@@ -197,15 +197,15 @@ using the Kalman filter. The inference afterwards is suspect; we would
 essentially be estimating a kernel regression of $C_t$ on time, and
 using the estimated regression as though it’s known with certainty.</p>
 <p>When would long differences reduce variance? Well if
-$\Delta C(t) =\Delta C^<em>(t) + \epsilon_t$ with $\epsilon_t$ indepenedent
-over time with mean $0$ and constant variance, then you would need
-$C^</em>(t) - C^<em>(t-L)$ to increase faster than linearly with $L$. This is
-true if $C^</em>$ is growing exponentially.</p>
+$\Delta C(t) = \Delta C^\ast(t) + \epsilon_t$ with $\epsilon_t$
+indepenedent over time with mean $0$ and constant variance, then you
+would need $C^\ast(t) - C^\ast(t-L)$ to increase faster than linearly
+with $L$. This is true if $C^\ast$ is growing exponentially.</p>
 <p>Alternatively, if $\epsilon_t$ is not independent over time, but
 negatively correlated (as seems likely), then variance can decrease with
-$L$. For example, if $\Delta C(t) = C^<em>(t) - C^</em>(t-\delta)$ with
+$L$. For example, if $\Delta C(t) = C^\ast(t) - C^\ast(t-\delta)$ with
 $\delta$ a random, independent increment with mean $1$, then variance
-will tend to decrease with $L$ regardless of $C^*(t)$.</p>
+will tend to decrease with $L$ regardless of $C^\ast(t)$.</p>
 <h2 id="results">Results<a class="headerlink" href="#results" title="Permanent link">&para;</a></h2>
 <p>Here, we will allow the initial and time varying mean of $R_{s,t}$ to
 depend on covariates.</p>
@@ -245,7 +245,7 @@ x0 = inverse(trans,p0)
 @time LogDensityProblems.logdensity_and_gradient(∇P, x0);
 </code></pre>
 
-<pre><code>2.132728 seconds (4.01 M allocations: 193.499 MiB, 7.13% gc time)
+<pre><code>2.121750 seconds (4.01 M allocations: 193.342 MiB, 9.42% gc time)
 </code></pre>
 <pre><code class="julia">rng = MersenneTwister()
 steps = 100

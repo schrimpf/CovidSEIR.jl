@@ -188,14 +188,19 @@ $\overline{R_{t,L}}$ by using $k_{t,L} =\log(C(t)-C(t-L))$ and following
 the procedure above.</p>
 <p>If testing varies with time, it becomes hard to separate testing rate
 changes from $R_t$ after taking long differnces.</p>
-<p>!!! note The same analysis can be applied to other smoothing operations,
-i.e. using <script type="math/tex; mode=display">
-    \sum_{i=0}^L w_i \Delta C_{t-i}
-    </script> in place of $C(t) - C(t-L)$. However, there’s something strange
-about smoothing $C_t$, and then extracting a smoothed component of it
-using the Kalman filter. The inference afterwards is suspect; we would
-essentially be estimating a kernel regression of $C_t$ on time, and
-using the estimated regression as though it’s known with certainty.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The same analysis can be applied to other smoothing operations, i.e. using
+<script type="math/tex; mode=display">
+\sum_{i=0}^L w_i \Delta C_{t-i}
+</script>
+in place of $C(t) - C(t-L)$. However, there&rsquo;s something strange
+about smoothing $C_t$, and then extracting a smoothed component of
+it using the Kalman filter. The inference afterwards is suspect;
+we would essentially be estimating a kernel regression of $C_t$ on
+time, and using the estimated regression as though it&rsquo;s known with
+certainty.</p>
+</div>
 <p>When would long differences reduce variance? Well if
 $\Delta C(t) = \Delta C^\ast(t) + \epsilon_t$ with $\epsilon_t$
 indepenedent over time with mean $0$ and constant variance, then you

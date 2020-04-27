@@ -1,0 +1,344 @@
+---
+title       : "Long difference estimates of $R_t$"
+subtitle    :
+author      : Paul Schrimpf
+date        : `j using Dates; print(Dates.today())`
+bibliography: "covid.bib"
+link-citations: true
+options:
+      out_width : 100%
+      wrap : true
+      fig_width : 800
+      dpi : 192
+---
+
+
+## Longer Differences and Smoothing
+
+One way to reduce $\sigma_k/\sigma_R$ is to reduce noise in new cases
+by taking a longer difference or smoothing case counts in some other
+way. How does this affect the estimation and interpretation of $R_t$?
+
+As in the first section, we start with the approximate recursive relation
+$$
+C(t) - C(t-1) \equiv \Delta C(t) \approx \frac{\tau(t)}{\tau(t-1)} e^{\gamma (R_t - 1)} \Delta C(t-1)
+$$
+If we instead look at a longer difference,
+$$
+\begin{align*}
+C(t) - C(t-L) = & \sum_{i=0}^{L-1} \Delta C_{t-i} \\
+\approx & \sum_{i=0}^{L-1} \frac{\tau(t-i)}{\tau(t-i-1)} e^{\gamma (R_{t-i} - 1)} \Delta C_{t-i-1} \\
+= & \overline {T_{t,L} e^{\gamma(R_{t,L} - 1)}} \sum_{i=0}^{L-1}\Delta C_{t-i-1} \\
+= & \overline {T_{t,L} e^{\gamma(R_{t,L} - 1)}} \left( C(t-1) - C(t-1-L) \right)
+\end{align*}
+$$
+where $\overline {T_{t,L} e^{\gamma(R_{t,L} - 1)}}$ is some
+intermediate value in between the minimum and maximum of the
+$\{ \frac{\tau(t-i)}{\tau(t-i-1)} e^{\gamma (R_{t-i} - 1)} \}_{i=0}^{L-1}$.
+
+If testing is constant over time, we can then
+obtain an interpretable $\overline{R_{t,L}}$ by using
+$k_{t,L} =\log(C(t)-C(t-L))$
+and following the procedure above.
+
+If testing varies with time, it becomes hard to separate testing rate
+changes from $R_t$ after taking long differnces.
+
+!!! note
+
+    The same analysis can be applied to other smoothing operations, i.e. using
+    $$
+    \sum_{i=0}^L w_i \Delta C_{t-i}
+    $$
+    in place of $C(t) - C(t-L)$. However, there's something strange
+    about smoothing $C_t$, and then extracting a smoothed component of
+    it using the Kalman filter. The inference afterwards is suspect;
+    we would essentially be estimating a kernel regression of $C_t$ on
+    time, and using the estimated regression as though it's known with
+    certainty.
+
+
+When would long differences reduce variance? Well if
+$\Delta C(t) = \Delta C^\ast(t) + \epsilon_t$ with
+$\epsilon_t$ indepenedent over time
+with mean $0$ and constant variance, then you would need
+$C^\ast(t) - C^\ast(t-L)$
+to increase faster than linearly with $L$.
+This is true if $C^\ast$ is growing exponentially.
+
+Alternatively, if $\epsilon_t$ is not independent over time, but
+negatively correlated (as seems likely), then variance can decrease
+with $L$. For example, if
+$\Delta C(t) = C^\ast(t) - C^\ast(t-\delta)$
+with
+$\delta$ a random, independent increment with mean $1$, then variance
+will tend to decrease with $L$ regardless of $C^\ast(t)$.
+
+## Results
+
+
+```julia; echo=false
+# data prep
+using TransformVariables, Parameters, CovidSEIR, Plots,  StatsPlots, DataFrames, Dates, LinearAlgebra, Distributions, Random, LogDensityProblems, DynamicHMC, MCMCChains, JLD2
+Plots.pyplot()
+include("jmd/rtmod.jl")
+df = CovidSEIR.statedata()
+df = filter(x->x.fips<60, df)
+
+pvars = [Symbol("Stay.at.home..shelter.in.place"),
+         Symbol("State.of.emergency"),
+         Symbol("Date.closed.K.12.schools"),
+         Symbol("Closed.gyms"),
+         Symbol("Closed.movie.theaters"),
+         Symbol("Closed.day.cares"),
+         Symbol("Date.banned.visitors.to.nursing.homes"),
+         Symbol("Closed.non.essential.businesses"),
+         Symbol("Closed.restaurants.except.take.out")]
+
+mvars = [:retail_and_recreation_percent_change_from_baseline,
+         :grocery_and_pharmacy_percent_change_from_baseline,
+         :parks_percent_change_from_baseline ,
+         :transit_stations_percent_change_from_baseline,
+         :workplaces_percent_change_from_baseline,
+         :residential_percent_change_from_baseline,
+         :percentchangebusinesses]
+
+df[!,:logpopdens] = log.(df[!,Symbol("Population.density.per.square.miles")])
+df[!,:weekend] = dayofweek.(df[!,:date]) .>= 6
+x0vars=[:constant, :logpopdens,
+        Symbol("Percent.Unemployed..2018."),
+        Symbol("Percent.living.under.the.federal.poverty.line..2018."),
+        Symbol("Percent.at.risk.for.serious.illness.due.to.COVID")]
+sdf = copy(df)
+for p in pvars
+  newp = falses(size(sdf,1))
+  for st in unique(sdf.state)
+    ss = sdf.state .== st
+    day = unique(skipmissing(sdf[ss,p]))
+    if (length(day) != 1)
+      newp[ss] .= false
+    else
+      newp[ss] .= (sdf[ss, :date] .> day)
+    end
+  end
+  sdf[!,p] = newp
+end
+sdf = sort(sdf, [:state, :date])
+
+function vecdiff(x::AbstractVector, d=1)
+  if d>0
+    dx = vcat(fill(missing, d), x[(d+1):end] .- x[1:(end-d)])
+  elseif d<0
+    dx = vcat(-x[(d+1):end] .+ x[1:(end-d)], fill(missing,d))
+  else
+    dx = copy(x)
+  end
+  return(dx)
+end
+
+sdf = sort(sdf, (:state, :date))
+lag = 7
+sdf[!,:newcases] = by(sdf, :state, newcases = Symbol("cases.nyt") => x->vecdiff(x, lag))[!,:newcases]
+#sdf[!,:sc] = by(sdf, :state, sc = :newcases => x->smoother(x, w=pdf.(Normal(0,2), -3:3)))[!,:sc]
+sdf[!,:dlogk] = by(sdf, :state, dlogk = :newcases => x->vecdiff(log.(max.(x,0.1)), 1))[!,:dlogk]
+
+sdf = sort(sdf, (:state, :date));
+sdf[!,mvars] ./= 100
+sdf[!,:constant] .= 1
+
+for v in mvars
+  i = ismissing.(sdf[!,v]) .& (sdf.date .<= Date("2020-03-01"))
+  sdf[i, v] .= 0
+  for gdf in groupby(sdf, :state)
+    lastval = gdf[findlast(.!ismissing.(gdf[!,v])),v]
+    gdf[ismissing.(gdf[:,v]),v] .= lastval
+  end
+end
+
+xvars = vcat(:constant, pvars,mvars) #vcat(pvars,mvars,:weekend)
+day1 = Dates.Date("2020-03-20");
+selector(st) = x->((x.state==st) .& (x.cases.>=5) .& .!(ismissing.(x.dlogk)))
+dlogk = Vector{Float64}.([filter(selector(st), sdf).dlogk for st in unique(sdf.state)]);
+dates = [filter(selector(st),  sdf).date for st in unique(sdf.state)];
+X = Matrix{Float64}.([filter(selector(st), sdf)[!,xvars] for st in unique(sdf.state)]);
+selector(st) = x->((x.state==st) .& (x.date.==Date("2020-03-30")))
+X0 = vec.(Matrix{Float64}.([filter(selector(st), sdf)[!,x0vars] for st in unique(sdf.state)]));
+```
+
+Here, we will allow the initial and time varying mean of $R_{s,t}$ to
+depend on covariates.
+
+$$
+\begin{align*}
+\tilde{R}_{s,0} & \sim N(X_{0,s} \alpha_0, \sigma^2_{R,0}) \\
+\tilde{R}_{s,t} & = \rho \tilde{R}_{s,t} + u_{s,t} \;,\; u_{s,t} \sim
+N(0, \sigma^2_R) \\
+R_{s,t} & = X_{s,t} \alpha + \tilde{R}_{s,t} \\
+\Delta \log(k)_{s,t} & = \gamma (R_{s,t} - 1) + \epsilon_{s,t} -
+\epsilon_{s,t-1} \;, \; \epsilon_{s,t} \sim N(0, \sigma^2_k)
+\end{align*}
+$$
+
+
+```julia
+reestimate=false
+rlo=-1 #1 - eps(Float64)
+rhi=1.2 #1+ eps(Float64)
+K = size(X[1],2)
+priors = (γ = truncated(Normal(1/7,1/7), 1/28, 1/1),
+          σR0 = truncated(Normal(1, 3), 0, Inf),
+          α0 = MvNormal(zeros(length(X0[1])), sqrt(10)), #truncated(Normal(1, 3), 0, Inf),
+          σR = truncated(Normal(0.25,1),0,Inf),
+          σk = truncated(Normal(0.1, 5), 0, Inf),
+          ρ = Uniform(rlo, rhi),
+          α = MvNormal(zeros(K), sqrt(10))
+          )
+mdl = RT.RtRW(dlogk, X, X0, priors);
+trans = as( (γ = asℝ₊, σR0 = asℝ₊, α0 = as(Array, length(X0[1])),
+             σR = asℝ₊, σk = asℝ₊, ρ=as(Real, rlo, rhi),
+             α = as(Array, K)) )
+P = TransformedLogDensity(trans, mdl)
+∇P = ADgradient(:ForwardDiff, P)
+
+p0 = (γ = 1/7, σR0=1.0, α0 = zeros(length(X0[1])), σR=0.25, σk=2.0, ρ=1.0, α=zeros(K))
+x0 = inverse(trans,p0)
+@time LogDensityProblems.logdensity_and_gradient(∇P, x0);
+
+rng = MersenneTwister()
+steps = 100
+warmup=default_warmup_stages(local_optimization=nothing, #FindLocalOptimum(1e-6, 200),
+                             stepsize_search=nothing,
+                             init_steps=steps, middle_steps=steps,
+                             terminating_steps=2*steps,  doubling_stages=4, M=Symmetric)
+x0 = x0
+if !isfile("rt7.jld2") || reestimate
+   res = DynamicHMC.mcmc_keep_warmup(rng, ∇P, 2000;initialization = (q = x0, ϵ=0.1),
+                                      reporter = LogProgressReport(nothing, 25, 15),
+                                                                 warmup_stages =warmup);
+   post = transform.(trans,res.inference.chain)
+   @save "rt7.jld2" post
+end
+@load "rt7.jld2" post
+p = post[1]
+vals = hcat([vcat([length(v)==1 ? v : vec(v) for v in values(p)]...) for p in post]...)'
+vals = reshape(vals, size(vals)..., 1)
+names = vcat([length(p[s])==1 ? String(s) : String.(s).*"[".*string.(1:length(p[s])).*"]" for s in keys(p)]...)
+cc = MCMCChains.Chains(vals, names)
+display(plot(cc))
+display(describe(cc))
+display([1:length(x0vars)  x0vars])
+display([1:length(xvars) xvars])
+```
+
+```julia
+states = unique(sdf.state)
+states_to_plot = ["New York", "New Jersey","Massachusetts","California",
+                  "Georgia","Illinois","Michigan",
+                  "Ohio","Wisconsin","Washington"]
+S = length(states_to_plot)
+figs = fill(plot(), S)
+for (i,st) in enumerate(states_to_plot)
+  s = findfirst(states.==st)
+  figr = RT.plotpostr(dates[s],dlogk[s],post, X[s], X0[s])
+  l = @layout [a{.1h}; grid(1,1)]
+  figs[i] = plot(plot(annotation=(0.5,0.5, st), framestyle = :none),
+                 plot(figr, ylim=(-1,10)), layout=l)
+  display(figs[i])
+end
+```
+
+# Another Derivation
+
+An alternative (and easier) way to derive the same estimator will be
+described here.  This approach will easily generalize to more
+complicated models, but let's begin with the simplest SIR model with testing.
+
+$$
+\begin{align*}
+\dot{S} & = -\frac{S}{N} \beta I \\
+\dot{I} & = \frac{S}{N} \beta I - \gamma I \\
+\dot{C} & = \tau I \\
+\dot{\mathcal{R}} & = \gamma I
+\end{align*}
+$$
+
+Then note that
+
+$$
+\ddot{C} = \dot{\tau} I + \tau \dot{I}
+$$
+
+and
+
+$$
+\begin{align*}
+\frac{\ddot{C}}{\dot{C}} = & \frac{\dot{\tau}}{\tau} + \frac{\dot{I}}{I} \\
+\frac{d}{dt} \log(\dot{C}) = &  \frac{\dot{\tau}}{\tau} + \frac{S}{N}\beta - \gamma \\
+= & \frac{\dot{\tau}}{\tau} + \gamma(R_t - 1)
+\end{align*}
+$$
+
+which is the equation we have been using for estimation.
+
+## Incorporating death
+
+If we add deaths to the model,
+$$
+\begin{align*}
+\dot{S} & = -\frac{S}{N} \beta I \\
+\dot{I} & = \frac{S}{N} \beta I - \gamma I - p I\\
+\dot{C} & = \tau I \\
+\dot{\mathcal{R}} & = \gamma I \\
+\dot{D} & = p I
+\end{align*}
+$$
+
+then,
+
+$$
+\begin{align*}
+\frac{\ddot{C}}{\dot{C}} = & \frac{\dot{\tau}}{\tau} + \frac{S}{N}\beta - \gamma - p \\
+\frac{\ddot{D}}{\dot{D}} = & \frac{S}{N}\beta - \gamma - p \\
+\end{align*}
+$$
+
+Other observable states could similarly be added to the model.
+
+## Time delays
+
+A drawback of the above approach is that it implies changes in $R_t$
+show up in the derivatives of case and death numbers instantly. This
+is definitely not true. Instead consider a model where infections last
+$\ell$ days. After $\ell$ days, each infected person dies with probability
+$\pi$ and recovers otherwise. Then we have
+
+$$
+\begin{align*}
+\dot{S}(t) & = -\frac{S(t)}{N} \beta I \\
+\dot{I}(t) & = \frac{S(t)}{N} \beta(t) I(t) - \frac{S(t-\ell)}{N} \beta(t-\ell) I(t-\ell) \\
+\dot{C}(t) & = \tau(t) I(t) \\
+\dot{\mathcal{R}}(t) & = (1-\pi) \frac{S(t-\ell)}{N} \beta(t-\ell) I(t-\ell) \\
+\dot{D}(t) & = \pi \frac{S(t-\ell)}{N} \beta(t-\ell) I(t-\ell)
+\end{align*}
+$$
+
+Rearranging gives
+$$
+\frac{\ddot{C}(t)}{\dot{C}(t)} = \frac{\dot{\tau}(t)}{\tau(t)} + \frac{S(t)}{N}\beta(t) - \frac{1}{\pi} \frac{\dot{D}(t)}{\dot{C}(t)}
+$$
+and
+$$
+\dot{D}(t) = \pi \frac{S(t-\ell)}{N} \beta(t-\ell) \frac{\dot{C}(t-\ell)}{\tau(t-\ell)}
+$$
+
+
+!!! note
+
+     These last two equations also hold in the model without time delay by
+     setting $\ell=0$ and $\pi = \frac{p}{p+\gamma}$
+
+
+!!! note
+
+       Random durations can be accomodated by replacing the shift by
+       $\ell$ with a convolution.

@@ -1220,12 +1220,6 @@ git-tree-sha1 = "1660f8fefbf5ab9c67560513131d4e933012fc4b"
 uuid = "f50d1b31-88e8-58de-be2c-1cc44531875f"
 version = "0.2.2+0"
 
-[[RollingFunctions]]
-deps = ["LinearAlgebra", "Statistics", "StatsBase", "Test"]
-git-tree-sha1 = "cdf9158377f81470b1b73c630d0853a3ec0c7445"
-uuid = "b0e4dd01-7b14-53d8-9b45-175a3e362653"
-version = "0.6.2"
-
 [[Roots]]
 deps = ["Printf"]
 git-tree-sha1 = "955ce06c1f424ca7043c7827f5cb14d8eb397065"

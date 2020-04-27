@@ -44,6 +44,8 @@ nav:
       - China: china.md
       - United States: us.md
     - US States : state.md
-    - Reproductive number: Rt.md
+    - Reproductive number:
+      - Systrom Approach: Rt.md
+      - Long-differening: rt_longdiff.md
   - About:
     - License: license.md

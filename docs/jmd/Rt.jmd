@@ -146,16 +146,15 @@ Plots.pyplot()
 df = CovidSEIR.statedata()
 df = filter(x->x.fips<60, df)
 # focus on 10 states with most cases as of April 1, 2020
-sdf = select(df[df[!,:date].==Dates.Date("2020-04-01"),:], :cases, :state) |>
-    x->sort(x,:cases, rev=true)
+sdf = select(df[df[!,:date].==Dates.Date("2020-04-01"),:], Symbol("cases.nyt"), :state) |>
+    x->sort(x,Symbol("cases.nyt"), rev=true)
 states=sdf[1:10,:state]
-sdf = select(filter(r->r[:state] ∈ states, df), :cases, :state, :date)
+sdf = select(filter(r->r[:state] ∈ states, df), Symbol("cases.nyt"), :state, :date)
 sdf = sort(sdf, [:state, :date])
-sdf[!,:newcases] = by(sdf, :state, newcases = :cases => x->(vcat(missing, diff(x))))[!,:newcases]
+sdf[!,:newcases] = by(sdf, :state, newcases = Symbol("cases.nyt") => x->(vcat(missing, diff(x))))[!,:newcases]
 
 figs = []
 for gdf in groupby(sdf, :state)
-  @show unique(gdf.state)
   f = @df gdf plot(:date, :newcases, legend=:none, linewidth=2, title=unique(gdf.state)[1])
   global figs = vcat(figs,f)
 end
@@ -220,7 +219,7 @@ function rtpostgrid(cases)
           pkr = casepdf.(λ, cases[t])
           if (all(pkr.==0))
             @warn "all pkr=0"
-            @show t, cases[t], cases[t-1]
+            #@show t, cases[t], cases[t-1]
             pkr .= 1
           end
         end
@@ -294,7 +293,7 @@ distribution. He used a window width of $7$ and Gaussian weights with
 standard deviation $2$.
 
 ```julia
-using RollingFunctions
+include("jmd/rtmod.jl")
 σ = 0.25
 Plots.closeall()
 for w in [3, 7, 11]
@@ -306,7 +305,7 @@ for w in [3, 7, 11]
       windowsize = w
       weights = pdf(Normal(0, s), -floor(windowsize/2):floor(windowsize/2))
       weights = weights/sum(weights)
-      smoothcases = Int.(round.(runmean(gdf.newcases[2:end], windowsize, weights*windowsize)))
+      smoothcases = RT.smoother(gdf.newcases, w=weights)
       p, m, cr = rtpost(smoothcases, γ, σ, x->pdf(truncated(Gamma(4,1),0,8), x),
                         (λ,x)->pdf(Poisson(λ),x))
       f = plot(gdf.date, m, ribbon=(m-cr[:,1], cr[:,2] - m), title=unique(gdf.state)[1], legend=:none, ylabel="Rₜ")
@@ -392,7 +391,7 @@ for p in pvars
   sdf[!,p] = by(sdf, :state, (:date, p) => x->(!ismissing(unique(x[p])[1]) .& (x.date .>= unique(x[p])[1]))).x1
 end
 sdf = sort(sdf, [:state, :date])
-sdf[!,:newcases] = by(sdf, :state, newcases = :cases => x->(vcat(missing, diff(x))))[!,:newcases]
+sdf[!,:newcases] = by(sdf, :state, newcases = Symbol("cases.nyt") => x->(vcat(missing, diff(x))))[!,:newcases]
 sdf[!,:dlogk] = by(sdf, :state, dlogk = :newcases => x->(vcat(missing, diff(log.(max.(x,0.1))))))[!,:dlogk]
 
 fmla = FormulaTerm(Term(:dlogk), Tuple(Term.(vcat(pvars,:state))))
@@ -410,14 +409,16 @@ strange. This is likely due to assumption 1 being incorrect. There is
 likely an unobserved component of $R_{s,t}$ that is positively
 correlated with policy indicators.
 
-## State space model
+# State space model
 
 A direct analog of Systrom's approach is to treat $R_{s,t}$ as an
 unobserved latent process. Specifically, we will assume that
 $$
 \begin{align*}
-R_{s,0} & \sim N(\mu_{R,0}, \sigma^2_{R,0}) \\
-R_{s,t} & = \rho R_{s,t} + u_{s,t} \;,\; u_{s,t} \sim N(0, \sigma^2_R) \\
+\tilde{R}_{s,0} & \sim N(\alpha_0, \sigma^2_{R,0}) \\
+\tilde{R}_{s,t} & = \rho \tilde{R}_{s,t} + u_{s,t} \;,\; u_{s,t} \sim
+N(0, \sigma^2_R) \\
+R_{s,t} & = \alpha + \tilde{R}_{s,t} \\
 \Delta \log(k)_{s,t} & = \gamma (R_{s,t} - 1) + \epsilon_{s,t} -
 \epsilon_{s,t-1} \;, \; \epsilon_{s,t} \sim N(0, \sigma^2_k)
 \end{align*}
@@ -446,17 +447,17 @@ following priors on the parameters.
 
 ```julia
 using Distributions, TransformVariables, DynamicHMC, MCMCChains, Plots, StatsPlots,
-  LogDensityProblems, Random, LinearAlgebra
+  LogDensityProblems, Random, LinearAlgebra, JLD2
 include("jmd/rtmod.jl")
 
 rlo=-1
 rhi=1.1
 priors = (γ = truncated(Normal(1/7,1/7), 1/28, 1/1),
           σR0 = truncated(Normal(1, 3), 0, Inf),
-          μR0 = truncated(Normal(1, 3), 0, Inf),
+          α0 = MvNormal([1], 3),
           σR = truncated(Normal(0.25,1),0,Inf),
           σk = truncated(Normal(0.1, 5), 0, Inf),
-          #ρ = Uniform(-1,1.1))
+          α = MvNormal([1], 3),
           ρ = Uniform(rlo, rhi))
 
 ```
@@ -464,6 +465,7 @@ priors = (γ = truncated(Normal(1/7,1/7), 1/28, 1/1),
 The estimation is fast and the chain appears to mix well.
 
 ```julia
+reestimate=false
 sdf = sort(sdf, (:state, :date));
 dlogk = [filter(x->((x.state==st) .&
                     (x.cases .>=10)),
@@ -473,11 +475,12 @@ dates = [filter(x->((x.state==st) .&
                 sdf).date for st in unique(sdf.state)];
 
 mdl = RT.RtRW(dlogk, priors)
-trans = as( (γ = asℝ₊, σR0 = asℝ₊, μR0 = asℝ₊,
-             σR = asℝ₊, σk = asℝ₊, ρ=as(Real, rlo, rhi)) )
+trans = as( (γ = asℝ₊, σR0 = asℝ₊, α0 = as(Array, 1),
+             σR = asℝ₊, σk = asℝ₊, α = as(Array,1),
+             ρ=as(Real, rlo, rhi)) )
 P = TransformedLogDensity(trans, mdl)
 ∇P = ADgradient(:ForwardDiff, P)
-p0 = (γ = 1/7, σR0=1.0, μR0=4.0,σR=0.25, σk=2.0, ρ=0.9)
+p0 = (γ = 1/7, σR0=1.0, α0=[4.0],σR=0.25, σk=2.0, α=[1], ρ=0.9)
 x0 = inverse(trans,p0)
 @time LogDensityProblems.logdensity_and_gradient(∇P, x0);
 
@@ -488,10 +491,14 @@ warmup=default_warmup_stages(local_optimization=nothing,
                              init_steps=steps, middle_steps=steps,
                              terminating_steps=2*steps,  doubling_stages=3, M=Symmetric)
 x0 = x0
-res = DynamicHMC.mcmc_keep_warmup(rng, ∇P, 2000;initialization = (q = x0, ϵ=0.1),
-                                  reporter = LogProgressReport(nothing, 25, 15),
-                                  warmup_stages =warmup);
-post = transform.(trans,res.inference.chain)
+if (!isfile("rt1.jld2") || reestimate)
+  res = DynamicHMC.mcmc_keep_warmup(rng, ∇P, 2000;initialization = (q = x0, ϵ=0.1),
+                                    reporter = LogProgressReport(nothing, 25, 15),
+                                    warmup_stages =warmup);
+  post = transform.(trans,res.inference.chain)
+  @save "rt1.jld2" post
+end
+@load "rt1.jld2" post
 p = post[1]
 vals = hcat([vcat([length(v)==1 ? v : vec(v) for v in values(p)]...) for p in post]...)'
 vals = reshape(vals, size(vals)..., 1)
@@ -520,64 +527,39 @@ posterior estimates of $R_{s,t}$.
 ```julia
 states = unique(sdf.state)
 s = findfirst(states.=="New York")
-function plotpostr(dates, dlogk, post)
-  k = [RT.kalman(dlogk, p.σR, p.σk, p.σR0, p.μR0, p.γ, p.ρ) for p in post];
-  γ = [p.γ for p in post];
-  meanR = hcat([x[1] for x in k]...);
-  varR = hcat([x[2] for x in k]...);
-  zhat = hcat([x[3] for x in k]...);
-  c = "black"
-  figr = plot(dates, mean(meanR, dims=2), ribbon=1.64*mean(sqrt.(varR),dims=2), color=c, fillalpha=0.2,
-              linewidth=1.5, legend=:none, ylab="Rₜ")
-  r=([quantile(meanR[t,:] - 1.64*sqrt.(varR[t,:]), 0.05) for t in 1:size(meanR,1)],
-     [quantile(meanR[t,:] + 1.64*sqrt.(varR[t,:]), 0.95) for t in 1:size(meanR,1)])
-  figr = plot!(figr, dates, zeros(length(r[1])), ribbon=(-r[1], r[2]), color=c,
-               linewidth=0, ylim=nothing, fillalpha=0.2)
-  figr = hline!(figr, [1.], color="red", linewidth=1.5, linestyle=:dash)
-  gr = copy(meanR)
-  for i=1:length(γ)
-    gr[:,i] .= γ[i]*(meanR[:,i].-1)
-  end
-  figk = plot(dates, [dlogk mean(gr, dims=2) mean(zhat,dims=2).-mean(γ)],
-              labels=["Δlog(newcases)" "γ(R-1)" "Eₜ[Δlog(newcases)]"],
-              legend=:topright, linewidth=2)
-
-  return(figr, figk)
-end
-figr, figk = plotpostr(dates[s],dlogk[s],post)
-l = @layout [a{.1h};
-             grid(2,1)]
-plot(plot(annotation=(0.5,0.5, states[s]), framestyle = :none),
-     figr, figk, layout=l)
+figr = RT.plotpostr(dates[s],dlogk[s],post, ones(length(dlogk[s]),1), [1])
+display(plot(figr, ylim=(-1,10)))
 ```
 
-The top panel of this figure shows the posterior distribution of
+This figure shows the posterior distribution of
 $R_{s,t}$ in New York. The black line is the posterior mean. The dark
 grey region is the average (over model parameters) of a 90\% credible
 region conditional on the model parameters. This is comparable to what
 Systrom (and many others) report, and ignores uncertainty in the model
 parameters. The light grey region is a 90\% credile region taking into
-account parameter uncertainty.
+account parameter uncertainty. The points and error bars are mean and
+90\% credible regions for
+$$
+\Delta \log k_{t}/\gamma + 1 = R_{t} + \epsilon_t/\gamma
+$$
 
-The lower panel shows the observed $\Delta log k$, the prediction of
-it attributable to $R_t$, and the prediction of it from the full
-model.  The full preduction uses the negatively correlated $MA(1)$
-errors in $\Delta log k$ in addition to $R_t$ to forecast
-$E[\Delta \log k_{t+1} | \mathcal{I}_t]$.
 
-### Posteriors for all States
+## Posteriors for additional states
 
 ```julia
-S = length(states)
+states_to_plot = ["New Jersey","Massachusetts","California",
+                  "Georgia","Illinois","Michigan",
+                  "Ohio","Wisconsin","Washington"]
+S = length(states_to_plot)
 figs = fill(plot(), 9*(S ÷ 9 + 1))
-for s in 1:S
-  figr, figk = plotpostr(dates[s],dlogk[s],post)
-  l = @layout [a{.1h};
-               grid(1,1)]
-  figs[s] = plot(plot(annotation=(0.5,0.5, states[s]), framestyle = :none),
-                 figr, layout=l)
-  if ((s % 9) ==0 || ( s==length(states)))
-    display(plot(figs[(s-8):s]..., layout=(3,3), reuse=false))
+for (i,st) in enumerate(states_to_plot)
+  s = findfirst(states.==st)
+  figr = RT.plotpostr(dates[s],dlogk[s],post, ones(length(dlogk[s]),1),[1])
+  l = @layout [a{.1h}; grid(1,1)]
+  figs[i] = plot(plot(annotation=(0.5,0.5, st), framestyle = :none),
+                 plot(figr, ylim=(-1,10)), layout=l)
+  if ((i % 9) ==0 || ( i==length(states_to_plot)))
+    display(plot(figs[(i-8):i]..., layout=(3,3), reuse=false))
   end
 end
 ```
@@ -592,5 +574,5 @@ do not affect the state-specific posteriors very much.
 !!! note
 
     I also tried fixing $\rho=1$. This gives similar results in terms
-    of $\sigma_k >> \sigma_R$, and gives posterior $R_{s,t}$ that
+    of $\sigma_k >> \sigma_R$, and gives a posterior for $R_{s,t}$ that is
     approximately constant over time.

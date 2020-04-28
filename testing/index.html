@@ -205,7 +205,7 @@ as</p>
 <p>Rearranging we have</p>
 <p>
 <script type="math/tex; mode=display">
-\dot{C}(t) = \tau(\tau) \frac{1}{p_D} \dot{D}(t-\ell).
+\dot{C}(t) = \tau(\tau) \frac{1}{p_D} \dot{D}(t+\ell).
 </script>
 </p>
 <p>Again, assuming the probability of death is constant, any departure from
@@ -226,10 +226,14 @@ time):</p>
 <p>Where $\tilde{p}_\ell$ are from inverting the relationship</p>
 <p>
 <script type="math/tex; mode=display">
-\text{deaths time } t = \sum_{\ell=0}^\infty P(\text{die time } t) | \text{infected time } t-\ell) (\text{infected time } t-\ell)
+\begin{align*}
+\text{deaths time } t = & \sum_{\ell=0}^\infty P(\text{die time } t) | \text{infected time } t-\ell) (\text{infected time } t-\ell) \\
+\text{inftected time } t-\underline{\ell} = & \frac{1}{P(\text{die time } t) | \text{infected time } t-\underline{\ell}) \left( \text{deaths time } t - \sum_{\ell={\underline{\ell}+1}^\infty P(\text{die time } t) | \text{infected time } t-\ell) (\text{infected time } t-\ell) \\
 </script>
 </p>
-<p>assuming that death probabilities are do not depend on time of
+<p>where $\underline{\ell}$ is the smallest $\ell$ such that
+$P(\text{die time } t) | \text{infected time } t-\ell) &gt; 0$, and
+assuming that death probabilities are do not depend on time of
 infection.</p>
 <p>Then substituting into</p>
 <p>
@@ -240,9 +244,45 @@ infection.</p>
 <p>gives</p>
 <p>
 <script type="math/tex; mode=display">
-\dot{C}(t) = \sum_{\ell=0}^\infty \tau(t, \ell) \tilde{p}_\ell \dot{D}(t-\ell)
+\dot{C}(t) = \sum_{\ell=0}^\infty \tau(t, \ell) \tilde{p}_\ell \dot{D}(t+\underline{\ell} - \ell)
 </script>
 </p>
+<p>```{=html}
+<!-- # Data --></p>
+<pre><code>```{=html}
+&lt;!-- ```julia --&gt;
+</code></pre>
+
+<p>```{=html}
+<!-- using CovidSEIR, Plots --></p>
+<pre><code>```{=html}
+&lt;!-- Plots.pyplot() --&gt;
+</code></pre>
+
+<p>```{=html}
+<!-- df = CovidSEIR.covidjhudata() --></p>
+<pre><code>```{=html}
+&lt;!-- sdf=filter(x-&gt;(!ismissing.(x.Province) .&amp; (x.Province .== &quot;British Columbia&quot;)), df) --&gt;
+</code></pre>
+
+<p>```{=html}
+<!-- Δ=7 --></p>
+<pre><code>```{=html}
+&lt;!-- date = sdf.Date[(Δ+1):end] --&gt;
+</code></pre>
+
+<p>```{=html}
+<!-- newcases = sdf.confirmed[(Δ+1):end] .- sdf.confirmed[1:(end-Δ)] --></p>
+<pre><code>```{=html}
+&lt;!-- deaths = sdf.deaths[(Δ+1):end] .- sdf.deaths[1:(end-Δ)] --&gt;
+</code></pre>
+
+<p>```{=html}
+<!-- plot( plot(date, newcases, ylabel="New cases in past $Δ days", color="blue", linewidth=1.5, legend=:none),  plot(date, deaths, ylabel="Deaths in past $Δ days", color="red", linewidth=1.5, legend=:none), layout=(2,1)) --></p>
+<pre><code>```{=html}
+&lt;!-- ``` --&gt;
+</code></pre>
+
 <div class="footnote">
 <hr />
 <ol>

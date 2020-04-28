@@ -233,7 +233,8 @@ time):</p>
 <script type="math/tex; mode=display">
 \begin{align*}
 \text{deaths time } t = & \sum_{\ell=0}^\infty P(\text{die time } t) | \text{infected time } t-\ell) (\text{infected time } t-\ell) \\
-\text{inftected time } t-\underline{\ell} = & \frac{1}{P(\text{die time } t) | \text{infected time } t-\underline{\ell}) \left( \text{deaths time } t - \sum_{\ell={\underline{\ell}+1}^\infty P(\text{die time } t) | \text{infected time } t-\ell) (\text{infected time } t-\ell) \\
+\text{inftected time } t-\underline{\ell} = & \frac{1} {P(\text{die time } t | \text{infected time } t-\underline{\ell})} \left( \text{deaths time } t - \sum_{\ell=\underline{\ell}+1}^\infty P(\text{die time } t | \text{infected time } t-\ell) (\text{infected time } t-\ell) \right)
+\end{align*}
 </script>
 </p>
 <p>where $\underline{\ell}$ is the smallest $\ell$ such that

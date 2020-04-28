@@ -152,6 +152,11 @@
               <ul class="nav flex-column">
               </ul>
             </li>
+            
+            <li class="nav-item" data-level="1"><a href="#data" class="nav-link">Data</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
         </ul>
     </div>
 </div></div>
@@ -247,42 +252,35 @@ infection.</p>
 \dot{C}(t) = \sum_{\ell=0}^\infty \tau(t, \ell) \tilde{p}_\ell \dot{D}(t+\underline{\ell} - \ell)
 </script>
 </p>
-<p>```{=html}
-<!-- # Data --></p>
-<pre><code>```{=html}
-&lt;!-- ```julia --&gt;
+<h1 id="data">Data<a class="headerlink" href="#data" title="Permanent link">&para;</a></h1>
+<pre><code class="julia">using CovidSEIR, Plots, Dates
+Plots.pyplot()
+df = CovidSEIR.covidjhudata()
+sdf=filter(x-&gt;(!ismissing.(x.Province) .&amp; (x.Province .== &quot;British Columbia&quot;)), df)
+Δ=7
+date = sdf.Date[(Δ+1):end]
+newcases = sdf.confirmed[(Δ+1):end] .- sdf.confirmed[1:(end-Δ)]
+deaths = sdf.deaths[(Δ+1):end] .- sdf.deaths[1:(end-Δ)]
+
+plot( plot(date, newcases, ylabel=&quot;New cases in past $Δ days&quot;, color=&quot;blue&quot;, linewidth=1.5, legend=:none),  plot(date, deaths, ylabel=&quot;Deaths in past $Δ days&quot;, color=&quot;red&quot;, linewidth=1.5, legend=:none), layout=(2,1))
 </code></pre>
 
-<p>```{=html}
-<!-- using CovidSEIR, Plots --></p>
-<pre><code>```{=html}
-&lt;!-- Plots.pyplot() --&gt;
+<p><img alt="" src="../figures/testing_1_1.png" /></p>
+<p>Now if we assume the time from testing to death is $L$ days, then
+$\tau(t)/p_D = \frac{\dot{C}(t)}{\dot{D}(t+L)}$. Let’s plots this for a
+variety of $L$.</p>
+<pre><code class="julia">xlim = Dates.value.((Date(&quot;2020-03-01&quot;), Dates.today()))
+ylim = (0, 40)
+ylab = &quot;τ(t)/p&quot;
+for L in [0, 3, 7, 14, 21]
+  display(scatter(date[1:(end-L)], newcases[1:(end-L)]./deaths[(L+1):end], ylim=ylim, xlim=xlim,
+                  legend=:none, ylabel=ylab, title=&quot;L=$L&quot;, markersize=2, reuse=false))
+end
 </code></pre>
 
-<p>```{=html}
-<!-- df = CovidSEIR.covidjhudata() --></p>
-<pre><code>```{=html}
-&lt;!-- sdf=filter(x-&gt;(!ismissing.(x.Province) .&amp; (x.Province .== &quot;British Columbia&quot;)), df) --&gt;
-</code></pre>
-
-<p>```{=html}
-<!-- Δ=7 --></p>
-<pre><code>```{=html}
-&lt;!-- date = sdf.Date[(Δ+1):end] --&gt;
-</code></pre>
-
-<p>```{=html}
-<!-- newcases = sdf.confirmed[(Δ+1):end] .- sdf.confirmed[1:(end-Δ)] --></p>
-<pre><code>```{=html}
-&lt;!-- deaths = sdf.deaths[(Δ+1):end] .- sdf.deaths[1:(end-Δ)] --&gt;
-</code></pre>
-
-<p>```{=html}
-<!-- plot( plot(date, newcases, ylabel="New cases in past $Δ days", color="blue", linewidth=1.5, legend=:none),  plot(date, deaths, ylabel="Deaths in past $Δ days", color="red", linewidth=1.5, legend=:none), layout=(2,1)) --></p>
-<pre><code>```{=html}
-&lt;!-- ``` --&gt;
-</code></pre>
-
+<p><img alt="" src="../figures/testing_2_1.png" /> <img alt="" src="../figures/testing_2_2.png" />
+<img alt="" src="../figures/testing_2_3.png" /> <img alt="" src="../figures/testing_2_4.png" />
+<img alt="" src="../figures/testing_2_5.png" /></p>
 <div class="footnote">
 <hr />
 <ol>

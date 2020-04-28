@@ -4,28 +4,28 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta name="description" content="Bayesian Estimate of SEIR model of Corona Virus">
+        
         <meta name="author" content="Paul Schrimpf">
         
-        <link rel="shortcut icon" href="img/favicon.ico">
-        <title>CovidSEIR.jl</title>
-        <link href="css/bootstrap.min.css" rel="stylesheet">
-        <link href="css/font-awesome.min.css" rel="stylesheet">
-        <link href="css/base.css" rel="stylesheet">
+        <link rel="shortcut icon" href="../img/favicon.ico">
+        <title>Testing, cases, and deaths - CovidSEIR.jl</title>
+        <link href="../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../css/font-awesome.min.css" rel="stylesheet">
+        <link href="../css/base.css" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/atelier-forest-light.min.css">
-        <link href="assets/Documenter.css" rel="stylesheet">
-        <link href="assets/extra.css" rel="stylesheet">
+        <link href="../assets/Documenter.css" rel="stylesheet">
+        <link href="../assets/extra.css" rel="stylesheet">
 
-        <script src="js/jquery-1.10.2.min.js" defer></script>
-        <script src="js/bootstrap.min.js" defer></script>
+        <script src="../js/jquery-1.10.2.min.js" defer></script>
+        <script src="../js/bootstrap.min.js" defer></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
         <script>hljs.initHighlightingOnLoad();</script> 
     </head>
 
-    <body class="homepage">
+    <body>
         <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
             <div class="container">
-                <a class="navbar-brand" href=".">CovidSEIR.jl</a>
+                <a class="navbar-brand" href="..">CovidSEIR.jl</a>
                 <!-- Expander button -->
                 <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#navbar-collapse">
                     <span class="navbar-toggler-icon"></span>
@@ -35,15 +35,15 @@
                 <div id="navbar-collapse" class="navbar-collapse collapse">
                         <!-- Main navigation -->
                         <ul class="nav navbar-nav">
-                            <li class="navitem active">
-                                <a href="." class="nav-link">Package Docs</a>
+                            <li class="navitem">
+                                <a href=".." class="nav-link">Package Docs</a>
                             </li>
-                            <li class="dropdown">
+                            <li class="dropdown active">
                                 <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">SEIR Model and Results <b class="caret"></b></a>
                                 <ul class="dropdown-menu">
                                     
 <li>
-    <a href="covid/" class="dropdown-item">Model</a>
+    <a href="../covid/" class="dropdown-item">Model</a>
 </li>
                                     
   <li class="dropdown-submenu">
@@ -51,29 +51,29 @@
     <ul class="dropdown-menu">
             
 <li>
-    <a href="canada/" class="dropdown-item">Canada</a>
+    <a href="../canada/" class="dropdown-item">Canada</a>
 </li>
             
 <li>
-    <a href="italy/" class="dropdown-item">Italy</a>
+    <a href="../italy/" class="dropdown-item">Italy</a>
 </li>
             
 <li>
-    <a href="korea/" class="dropdown-item">South Korea</a>
+    <a href="../korea/" class="dropdown-item">South Korea</a>
 </li>
             
 <li>
-    <a href="china/" class="dropdown-item">China</a>
+    <a href="../china/" class="dropdown-item">China</a>
 </li>
             
 <li>
-    <a href="us/" class="dropdown-item">United States</a>
+    <a href="../us/" class="dropdown-item">United States</a>
 </li>
     </ul>
   </li>
                                     
 <li>
-    <a href="state/" class="dropdown-item">US States</a>
+    <a href="../state/" class="dropdown-item">US States</a>
 </li>
                                     
   <li class="dropdown-submenu">
@@ -81,17 +81,17 @@
     <ul class="dropdown-menu">
             
 <li>
-    <a href="Rt/" class="dropdown-item">Systrom Approach</a>
+    <a href="../Rt/" class="dropdown-item">Systrom Approach</a>
 </li>
             
 <li>
-    <a href="rt_longdiff/" class="dropdown-item">Long-differening</a>
+    <a href="../rt_longdiff/" class="dropdown-item">Long-differening</a>
 </li>
     </ul>
   </li>
                                     
 <li>
-    <a href="testing/" class="dropdown-item">Testing, cases, and deaths</a>
+    <a href="./" class="dropdown-item active">Testing, cases, and deaths</a>
 </li>
                                 </ul>
                             </li>
@@ -100,7 +100,7 @@
                                 <ul class="dropdown-menu">
                                     
 <li>
-    <a href="license/" class="dropdown-item">License</a>
+    <a href="../license/" class="dropdown-item">License</a>
 </li>
                                 </ul>
                             </li>
@@ -113,17 +113,17 @@
                             </a>
                         </li>
                             <li class="nav-item">
-                                <a rel="prev" class="nav-link disabled">
+                                <a rel="prev" href="../rt_longdiff/" class="nav-link">
                                     <i class="fa fa-arrow-left"></i> Previous
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a rel="next" href="covid/" class="nav-link">
+                                <a rel="next" href="../license/" class="nav-link">
                                     Next <i class="fa fa-arrow-right"></i>
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="https://github.com/schrimpf/CovidSEIR.jl/edit/master/docs/index.md" class="nav-link"><i class="fa fa-github"></i> Edit on GitHub</a>
+                                <a href="https://github.com/schrimpf/CovidSEIR.jl/edit/master/docs/testing.md" class="nav-link"><i class="fa fa-github"></i> Edit on GitHub</a>
                             </li>
                     </ul>
                 </div>
@@ -143,12 +143,13 @@
     <div id="toc-collapse" class="navbar-collapse collapse card bg-secondary">
         <ul class="nav flex-column">
             
-            <li class="nav-item" data-level="1"><a href="#covidseirjl" class="nav-link">CovidSEIR.jl</a>
-              <ul class="nav flex-column">
-            <li class="nav-item" data-level="2"><a href="#index" class="nav-link">Index</a>
+            <li class="nav-item" data-level="1"><a href="#time-delays" class="nav-link">Time delays</a>
               <ul class="nav flex-column">
               </ul>
             </li>
+            
+            <li class="nav-item" data-level="1"><a href="#general-relationship" class="nav-link">General Relationship</a>
+              <ul class="nav flex-column">
               </ul>
             </li>
         </ul>
@@ -156,22 +157,102 @@
 </div></div>
                     <div class="col-md-9" role="main">
 
-<p><a id='CovidSEIR.jl-1'></a></p>
-<h1 id="covidseirjl">CovidSEIR.jl<a class="headerlink" href="#covidseirjl" title="Permanent link">&para;</a></h1>
-<p><a id='Index-1'></a></p>
-<h2 id="index">Index<a class="headerlink" href="#index" title="Permanent link">&para;</a></h2>
-<ul>
-<li><a href="functions/#CovidSEIR.countrymodel"><code>CovidSEIR.countrymodel</code></a></li>
-<li><a href="functions/#CovidSEIR.covidjhudata-Tuple{}"><code>CovidSEIR.covidjhudata</code></a></li>
-<li><a href="functions/#CovidSEIR.odeSEIR-Tuple{}"><code>CovidSEIR.odeSEIR</code></a></li>
-<li><a href="functions/#CovidSEIR.paramvars-Tuple{Any}"><code>CovidSEIR.paramvars</code></a></li>
-<li><a href="functions/#CovidSEIR.paramvec-NTuple{5,Any}"><code>CovidSEIR.paramvec</code></a></li>
-<li><a href="functions/#CovidSEIR.plotvars-Tuple{DataFrames.AbstractDataFrame,CountryData}"><code>CovidSEIR.plotvars</code></a></li>
-<li><a href="functions/#CovidSEIR.priorreport"><code>CovidSEIR.priorreport</code></a></li>
-<li><a href="functions/#CovidSEIR.simtrajectories-Tuple{AbstractMCMC.AbstractChains,CountryData,Any}"><code>CovidSEIR.simtrajectories</code></a></li>
-<li><a href="functions/#CovidSEIR.systemvars-Tuple{Any}"><code>CovidSEIR.systemvars</code></a></li>
-<li><a href="functions/#CovidSEIR.systemvec-NTuple{7,Any}"><code>CovidSEIR.systemvec</code></a></li>
-</ul></div>
+<p>This note describes how changes in the relationship between new
+confirmed cases and deaths can be used to infer changes in testing.</p>
+<p>To illustrate the idea, begin by considering a simple SIR model with the
+addition that infections get detected at rate $\tau(t)$.<sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup></p>
+<p>
+<script type="math/tex; mode=display">
+\begin{align*}
+\dot{S} & = -\frac{S}{N} \beta I \\
+\dot{I} & = \frac{S}{N} \beta I - \gamma I - p I\\
+\dot{C} & = \tau I \\
+\dot{\mathcal{R}} & = \gamma I \\
+\dot{D} & = p I
+\end{align*}
+</script>
+</p>
+<p>where $S$ is susceptible, $I$ is infections, $C$ is cumulative confirmed
+cases, and $D$ are deaths. Then we immediately have that</p>
+<p>
+<script type="math/tex; mode=display">
+\dot{C} = \tau \frac{1}{p} \dot{D}
+</script>
+</p>
+<p>Assuming death rates are constant, then any departure from a linear
+relationship between $\dot{C}$ and $\dot{D}$ is due to changes in
+testing.</p>
+<h1 id="time-delays">Time delays<a class="headerlink" href="#time-delays" title="Permanent link">&para;</a></h1>
+<p>The basic SIR model assume the hazard rate of death does not dependent
+on infection duration. This is a poor assumption, and, moreover, affects
+the relationship between $\dot{C}$ and $\dot{D}$. To illusture, we will
+assume a simple form of duration dependence – infections last $\ell$
+days. After $\ell$ days a person dies with probability $p_D$. We will
+also change the process generating confirmed cases to new infection on
+day $t$ are detected with probability $\tau(t)$. The system now evolves
+as</p>
+<p>
+<script type="math/tex; mode=display">
+\begin{align*}
+\dot{S} & = -\frac{S}{N} \beta I \\
+\dot{I} & = \frac{S(t)}{N} \beta(t) I(t) - \frac{S(t-\ell)}{N} \beta(t-\ell) I(t-\ell) \\
+\dot{C} & = \tau(t) \frac{S(t)}{N} \beta(t) I(t) \\
+\dot{\mathcal{R}} & = (1-p_D) \frac{S(t-\ell)}{N} \beta(t-\ell) I(t-\ell) \\
+\dot{D} & = p_D \frac{S(t-\ell)}{N} \beta(t-\ell) I(t-\ell) \\
+\end{align*}
+</script>
+</p>
+<p>Rearranging we have</p>
+<p>
+<script type="math/tex; mode=display">
+\dot{C}(t) = \tau(\tau) \frac{1}{p_D} \dot{D}(t-\ell).
+</script>
+</p>
+<p>Again, assuming the probability of death is constant, any departure from
+a linear relationship between $\dot{C}(t)$ and $\dot{D}(t-\ell)$ is due
+to changes in testing.</p>
+<h1 id="general-relationship">General Relationship<a class="headerlink" href="#general-relationship" title="Permanent link">&para;</a></h1>
+<p>Other modifications to the model, such as an additional incubation
+period or random infection durations will lead to slightly different
+implications about the relationship betwen $\tau$, $\dot{C}$, and
+$\dot{D}$. However, it will always be of the form (now I’m treating time
+as discrete, replace the sum with an integral if you prefer continuous
+time):</p>
+<p>
+<script type="math/tex; mode=display">
+\dot{C}(t) = \sum_{\ell=0}^\infty \tau(t, \ell) \tilde{p}_\ell \dot{D}(t-\ell)
+</script>
+</p>
+<p>Where $\tilde{p}_\ell$ are from inverting the relationship</p>
+<p>
+<script type="math/tex; mode=display">
+\text{deaths time } t = \sum_{\ell=0}^\infty P(\text{die time } t) | \text{infected time } t-\ell) (\text{infected time } t-\ell)
+</script>
+</p>
+<p>assuming that death probabilities are do not depend on time of
+infection.</p>
+<p>Then substituting into</p>
+<p>
+<script type="math/tex; mode=display">
+\text{confirmed cases time } t = \sum_{\ell=0}^\infty \underbrace{P(\text{tested time } t) | \text{infected time } t-\ell)}_{\tau(t,\ell)} (\text{infected time } t-\ell)
+</script>
+</p>
+<p>gives</p>
+<p>
+<script type="math/tex; mode=display">
+\dot{C}(t) = \sum_{\ell=0}^\infty \tau(t, \ell) \tilde{p}_\ell \dot{D}(t-\ell)
+</script>
+</p>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:1">
+<p>Whether you treat time as continuous and read $\dot{S} =  dS/dt$
+or treat time as discrete and read $\dot{S} = S(t) - S(t-1)$ makes
+no difference for anything in this note.&#160;<a class="footnote-backref" href="#fnref:1" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div></div>
             </div>
         </div>
 
@@ -181,13 +262,13 @@
             <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
         </footer>
         <script>
-            var base_url = ".",
+            var base_url = "..",
                 shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
         </script>
-        <script src="js/base.js" defer></script>
+        <script src="../js/base.js" defer></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS_HTML" defer></script>
-        <script src="assets/mathjaxhelper.js" defer></script>
-        <script src="search/main.js" defer></script>
+        <script src="../assets/mathjaxhelper.js" defer></script>
+        <script src="../search/main.js" defer></script>
 
         <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -255,8 +336,3 @@
 
     </body>
 </html>
-
-<!--
-MkDocs version : 1.1
-Build Date UTC : 2020-04-28 19:32:43
--->

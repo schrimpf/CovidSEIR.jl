@@ -1,5 +1,7 @@
 # CovidSEIR.jl
 
+This package has broken dependencies.
+
 Bayesian estimation of a SEIR model or Corona Virus
 
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://schrimpf.github.io/CovidSEIR.jl)

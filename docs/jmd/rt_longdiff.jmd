@@ -82,7 +82,7 @@ will tend to decrease with $L$ regardless of $C^\ast(t)$.
 using TransformVariables, Parameters, CovidSEIR, Plots,  StatsPlots, DataFrames, Dates, LinearAlgebra, Distributions, Random, LogDensityProblems, DynamicHMC, MCMCChains, JLD2
 Plots.pyplot()
 include("jmd/rtmod.jl")
-df = CovidSEIR.statedata()
+df = CovidData.statedata()
 df = filter(x->x.fips<60, df)
 
 pvars = [Symbol("Stay.at.home..shelter.in.place"),

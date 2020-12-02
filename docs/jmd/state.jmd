@@ -133,9 +133,9 @@ states and days where it is large.
 ## Estimation
 
 ```julia
-using CovidSEIR, Plots, VegaLite, PrettyTables, DataFrames, JLD2
+using CovidSEIR, CovidData, Plots, VegaLite, PrettyTables, DataFrames, JLD2
 Plots.pyplot()
-df = CovidSEIR.statedata()
+df = CovidData.statedata()
 ode = CovidSEIR.MultiRegion.odeSEIR()
 dat = CovidSEIR.RegionsData(df[df[!,:fips].<60,:], idvar=:fips );
 ```

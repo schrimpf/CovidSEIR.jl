@@ -143,7 +143,7 @@ First the load data.
 using DataFrames, Plots, StatsPlots, CovidSEIR
 Plots.pyplot()
 
-df = CovidSEIR.statedata()
+df = CovidData.statedata()
 df = filter(x->x.fips<60, df)
 # focus on 10 states with most cases as of April 1, 2020
 sdf = select(df[df[!,:date].==Dates.Date("2020-04-01"),:], Symbol("cases.nyt"), :state) |>

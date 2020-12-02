@@ -20,7 +20,7 @@ License](http://creativecommons.org/licenses/by-sa/4.0/)
 
 
 ```julia
-using CovidSEIR,  Plots, DataFrames, JLD2, StatsPlots, Dates, MCMCChains
+using CovidSEIR, CovidData,  Plots, DataFrames, JLD2, StatsPlots, Dates, MCMCChains
 Plots.pyplot()
 jmddir = normpath(joinpath(dirname(Base.find_package("CovidSEIR")),"..","docs","jmd"))
 covdf = covidjhudata();

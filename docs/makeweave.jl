@@ -3,12 +3,12 @@
 using Weave
 
 
-#runweave= "weave" ∈ ARGS
-#runnotebook= "notebook" ∈ ARGS
-runweave= true
-runnotebook= false
+runweave= "weave" ∈ ARGS
+runnotebook= "notebook" ∈ ARGS
+#runweave= true
+#runnotebook= false
 
-for arg in ["jmd/rt_longdiff.jmd"] #ARGS
+for arg in ARGS
   if !(arg ∈ ["weave", "notebook"])
     src= arg
 

@@ -1,7 +1,7 @@
 fileprefix = match(r"([a-zA-Z]+)_.+",ARGS[1]).captures[1]
 println(ARGS)
 println(fileprefix)
-using CovidSEIR, Turing, JLD2, Dates, DataFrames
+using CovidSEIR, CovidData, Turing, JLD2, Dates, DataFrames
 countrynames = Dict( "us" => "US",
                      "china" => "China",
                      "korea" => "Korea, South",

@@ -20,7 +20,7 @@ License](http://creativecommons.org/licenses/by-sa/4.0/)
 
 
 ```julia
-using CovidSEIR
+using CovidSEIR, CovidData
 using Plots
 Plots.pyplot()
 using DataFrames, JLD2

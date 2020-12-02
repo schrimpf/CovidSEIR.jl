@@ -252,6 +252,12 @@ git-tree-sha1 = "6d56f927b33d3820561b8f89d7de311718683846"
 uuid = "d38c429a-6771-53c6-b99e-75d170b6e991"
 version = "0.5.2"
 
+[[CovidData]]
+deps = ["CSV", "DataFrames", "Dates", "HTTP", "LinearAlgebra", "RCall", "WorldBankData", "ZipFile"]
+git-tree-sha1 = "fdbeed16c3684999d1a978fe42651de89a190ba6"
+uuid = "d602b1ce-c8e8-436d-8dfe-952725c75295"
+version = "0.1.0"
+
 [[CovidSEIR]]
 deps = ["AbstractMCMC", "CSV", "ColorSchemes", "DataFrames", "Dates", "DifferentialEquations", "Distributions", "DynamicHMC", "ForwardDiff", "HTTP", "JLD2", "LineSearches", "LinearAlgebra", "LogDensityProblems", "MCMCChains", "ModelingToolkit", "Optim", "Parameters", "Plots", "PrettyTables", "Query", "Random", "Statistics", "StatsBase", "StatsPlots", "TransformVariables", "Turing", "VegaLite", "WorldBankData", "ZipFile", "Zygote"]
 path = "/home/paul/.julia/dev/CovidSEIR"
@@ -1125,6 +1131,12 @@ git-tree-sha1 = "7ffa41275edd6e0374a9ae8e3b048840867a06d9"
 uuid = "2aef5ad7-51ca-5a8f-8e88-e75cf067b44b"
 version = "0.9.1"
 
+[[RCall]]
+deps = ["CategoricalArrays", "Conda", "DataFrames", "DataStructures", "Dates", "Libdl", "Missings", "REPL", "Random", "Requires", "StatsModels", "WinReg"]
+git-tree-sha1 = "3bf98879b90a5ead7b2b76919c4549b79d4c7de0"
+uuid = "6f49c342-dc21-5d91-9882-a32aef131414"
+version = "0.13.5"
+
 [[REPL]]
 deps = ["InteractiveUtils", "Markdown", "Sockets"]
 uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
@@ -1498,6 +1510,12 @@ deps = ["Colors", "Dates", "Observables", "OrderedCollections"]
 git-tree-sha1 = "fc0feda91b3fef7fe6948ee09bb628f882b49ca4"
 uuid = "cc8bc4a8-27d6-5769-a93b-9d913e69aa62"
 version = "0.6.2"
+
+[[WinReg]]
+deps = ["Test"]
+git-tree-sha1 = "808380e0a0483e134081cc54150be4177959b5f4"
+uuid = "1b915085-20d7-51cf-bf83-8f477d6f5128"
+version = "0.3.1"
 
 [[WoodburyMatrices]]
 deps = ["LinearAlgebra", "SparseArrays"]

@@ -47,5 +47,6 @@ nav:
     - Reproductive number:
       - Systrom Approach: Rt.md
       - Long-differening: rt_longdiff.md
+    - Testing, cases, and deaths: testing.md
   - About:
     - License: license.md

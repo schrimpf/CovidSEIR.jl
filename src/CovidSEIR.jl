@@ -1,6 +1,7 @@
 module CovidSEIR
 
-import DataFrames, CSV, ZipFile, WorldBankData, HTTP
+import DataFrames
+using CovidData
 import Dates, AbstractMCMC, StatsBase,ColorSchemes
 using DifferentialEquations: concrete_solve, solve, remake, Tsit5, ODEProblem
 using ModelingToolkit: @parameters, @variables, @derivatives, ODESystem, ODEFunction, ~, Variable, Differential
@@ -17,8 +18,7 @@ include("leastsquares.jl")
 include("dynamichmc_interface.jl")
 include("multiregion.jl")
 
-export covidjhudata,
-  CountryData,
+export CountryData,
   countrymodel,
   priorreport,
   simtrajectories,
